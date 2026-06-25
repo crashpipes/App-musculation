@@ -1,0 +1,156 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Sex {
+  MALE
+  FEMALE
+}
+
+enum Goal {
+  BULK // prise de masse
+  MAINTAIN // maintien
+  CUT // sèche
+}
+
+enum ActivityLevel {
+  SEDENTARY // 1.2
+  LIGHT // 1.375
+  MODERATE // 1.55
+  ACTIVE // 1.725
+  VERY_ACTIVE // 1.9
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  passwordHash  String
+  name          String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  profile        Profile?
+  weightEntries  WeightEntry[]
+  dailyLogs      DailyLog[]
+  exercises      Exercise[]
+  sessions       WorkoutSession[]
+  uploads        Upload[]
+  resetTokens    PasswordResetToken[]
+}
+
+model Profile {
+  id            String        @id @default(cuid())
+  userId        String        @unique
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sex           Sex
+  birthDate     DateTime
+  heightCm      Float
+  currentWeight Float
+  goal          Goal          @default(MAINTAIN)
+  activity      ActivityLevel @default(MODERATE)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+}
+
+model WeightEntry {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  weightKg  Float
+  date      DateTime @default(now())
+  createdAt DateTime @default(now())
+
+  @@index([userId, date])
+}
+
+// Un enregistrement par jour et par utilisateur (cumul nutrition + eau)
+model DailyLog {
+  id           String   @id @default(cuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date         DateTime @db.Date
+  calories     Int      @default(0)
+  proteinG     Int      @default(0)
+  waterMl      Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([userId, date])
+  @@index([userId, date])
+}
+
+model Exercise {
+  id            String           @id @default(cuid())
+  name          String
+  muscleGroup   String
+  description   String?
+  imageUploadId String?
+  imageUpload   Upload?          @relation(fields: [imageUploadId], references: [id], onDelete: SetNull)
+  isPreset      Boolean          @default(false)
+  // null pour les exercices préchargés partagés ; sinon propriétaire
+  userId        String?
+  user          User?            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sets          WorkoutSet[]
+  createdAt     DateTime         @default(now())
+
+  @@index([userId])
+  @@index([muscleGroup])
+}
+
+model WorkoutSession {
+  id        String       @id @default(cuid())
+  userId    String
+  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date      DateTime     @default(now())
+  notes     String?
+  sets      WorkoutSet[]
+  createdAt DateTime     @default(now())
+
+  @@index([userId, date])
+}
+
+model WorkoutSet {
+  id         String          @id @default(cuid())
+  sessionId  String
+  session    WorkoutSession  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  exerciseId String
+  exercise   Exercise        @relation(fields: [exerciseId], references: [id], onDelete: Cascade)
+  setNumber  Int
+  reps       Int
+  weightKg   Float
+  notes      String?
+  date       DateTime        @default(now())
+
+  @@index([exerciseId, date])
+}
+
+// Métadonnées des fichiers uploadés (images privées)
+model Upload {
+  id          String     @id @default(cuid())
+  userId      String
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  filename    String
+  mimeType    String
+  sizeBytes   Int
+  createdAt   DateTime   @default(now())
+  exercises   Exercise[]
+
+  @@index([userId])
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String   @unique
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
