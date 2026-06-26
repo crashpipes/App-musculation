@@ -11,6 +11,7 @@ import { apiGet, apiSend } from "@/lib/fetcher";
 import { haptic } from "@/lib/haptics";
 import { bestEstimated1RM } from "@/lib/onerm";
 import { exName, muscleName } from "@/lib/exercise-i18n";
+import { exerciseImage } from "@/lib/exercise-images";
 import { useI18n } from "@/lib/i18n";
 import type { Exercise, WorkoutSet } from "@prisma/client";
 
@@ -111,6 +112,15 @@ export default function ExerciseDetailPage() {
           </button>
         )}
       </div>
+
+      {exerciseImage(data.exercise.name) && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={exerciseImage(data.exercise.name)!}
+          alt={exName(data.exercise.name, locale)}
+          className="max-h-72 w-full rounded-2xl border border-[rgb(var(--border))] bg-[rgb(var(--card))] object-contain"
+        />
+      )}
 
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
         <StatCard label={t("🏆 Record (PR)", "🏆 Record (PR)")} value={`${data.personalRecord} kg`} />
