@@ -4,7 +4,7 @@ import { requireUserId } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { workoutSetSchema } from "@/lib/validation";
 
-// Historique récent des séries de l'utilisateur (dernières séances)
+// Historique récent des séries de l'utilisateur.
 export async function GET(req: NextRequest) {
   try {
     const userId = await requireUserId();
@@ -21,40 +21,41 @@ export async function GET(req: NextRequest) {
   }
 }
 
-// Enregistre une série. Crée une session du jour si nécessaire.
+// Enregistre une série dans la SÉANCE EN COURS (il faut en avoir démarré une).
 export async function POST(req: NextRequest) {
   try {
     const userId = await requireUserId();
     const data = workoutSetSchema.parse(await req.json());
 
-    // Exercice accessible (préchargé ou possédé) ?
     const exercise = await prisma.exercise.findFirst({
       where: { id: data.exerciseId, OR: [{ isPreset: true }, { userId }] }
     });
     if (!exercise) throw new Error("NOT_FOUND");
 
-    let sessionId = data.sessionId;
-    if (sessionId) {
-      const owned = await prisma.workoutSession.findFirst({
-        where: { id: sessionId, userId }
-      });
-      if (!owned) throw new Error("NOT_FOUND");
-    } else {
-      const session = await prisma.workoutSession.create({
-        data: { userId, date: data.date ?? new Date() }
-      });
-      sessionId = session.id;
+    const active = await prisma.workoutSession.findFirst({
+      where: {
+        userId,
+        endedAt: null,
+        date: { gte: new Date(Date.now() - 12 * 60 * 60 * 1000) }
+      },
+      orderBy: { date: "desc" }
+    });
+    if (!active) {
+      return NextResponse.json(
+        { error: "Aucune séance en cours. Démarre une séance d'abord.", code: "NO_ACTIVE_WORKOUT" },
+        { status: 409 }
+      );
     }
 
     const set = await prisma.workoutSet.create({
       data: {
-        sessionId,
+        sessionId: active.id,
         exerciseId: data.exerciseId,
         sets: data.sets,
         reps: data.reps,
         weightKg: data.weightKg,
         notes: data.notes || null,
-        date: data.date ?? new Date()
+        date: new Date()
       },
       include: { exercise: true }
     });

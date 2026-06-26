@@ -13,9 +13,9 @@ export function BottomNav() {
   const items = [
     { href: "/dashboard", label: t("Accueil", "Home"), icon: "🏠" },
     { href: "/tracking", label: t("Suivi", "Track"), icon: "📊" },
-    { href: "/exercises", label: t("Exos", "Workouts"), icon: "🏋️" },
-    { href: "/profile", label: t("Profil", "Profile"), icon: "👤" },
-    { href: "/settings", label: t("Réglages", "Settings"), icon: "⚙️" }
+    { href: "/workout", label: t("Séance", "Workout"), icon: "🏋️" },
+    { href: "/exercises", label: t("Exos", "Library"), icon: "📚" },
+    { href: "/profile", label: t("Profil", "Profile"), icon: "👤" }
   ];
 
   return (

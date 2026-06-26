@@ -70,8 +70,10 @@ export default function DashboardPage() {
       </div>
 
       <div className="flex flex-wrap gap-2">
+        <Link href="/workout" className="btn-ghost text-sm">{t("🏋️ Séance", "🏋️ Workout")}</Link>
         <Link href="/routines" className="btn-ghost text-sm">{t("📋 Programmes", "📋 Routines")}</Link>
         <Link href="/badges" className="btn-ghost text-sm">{t("🏅 Badges", "🏅 Badges")}</Link>
+        <Link href="/settings" className="btn-ghost text-sm">{t("⚙️ Réglages", "⚙️ Settings")}</Link>
       </div>
 
       <div className="card">

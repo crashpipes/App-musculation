@@ -13,6 +13,7 @@ import { bestEstimated1RM } from "@/lib/onerm";
 import { exName, muscleName } from "@/lib/exercise-i18n";
 import { exerciseImage } from "@/lib/exercise-images";
 import { useI18n } from "@/lib/i18n";
+import { useWorkout } from "@/lib/workout";
 import type { Exercise, WorkoutSet } from "@prisma/client";
 
 interface DetailResponse {
@@ -25,6 +26,7 @@ export default function ExerciseDetailPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
   const { t, locale } = useI18n();
+  const { active, start, refresh } = useWorkout();
   const dl = locale === "en" ? enUS : fr;
   const [data, setData] = useState<DetailResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -48,18 +50,24 @@ export default function ExerciseDetailPage() {
 
   async function addEntry(e: React.FormEvent) {
     e.preventDefault();
+    setError(null);
     haptic();
-    await apiSend("/api/sets", "POST", {
-      exerciseId: params.id,
-      sets: Number(sets || 1),
-      reps: Number(reps || 0),
-      weightKg: Number(weight || 0),
-      notes: notes || undefined
-    });
-    setReps("");
-    setWeight("");
-    setNotes("");
-    load();
+    try {
+      await apiSend("/api/sets", "POST", {
+        exerciseId: params.id,
+        sets: Number(sets || 1),
+        reps: Number(reps || 0),
+        weightKg: Number(weight || 0),
+        notes: notes || undefined
+      });
+      setReps("");
+      setWeight("");
+      setNotes("");
+      await load();
+      await refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t("Erreur", "Error"));
+    }
   }
 
   async function deleteSet(id: string) {
@@ -89,7 +97,7 @@ export default function ExerciseDetailPage() {
 
   const oneRM = useMemo(() => bestEstimated1RM(data?.sets ?? []), [data]);
 
-  if (error) return <p className="text-red-500">{error}</p>;
+  if (error && !data) return <p className="text-red-500">{error}</p>;
   if (!data) return <p className="text-[rgb(var(--muted))]">{t("Chargement…", "Loading…")}</p>;
 
   return (
@@ -129,25 +137,34 @@ export default function ExerciseDetailPage() {
         <StatCard label={t("Volume total", "Total volume")} value={`${Math.round(totalVolume)} kg`} />
       </div>
 
-      <form onSubmit={addEntry} className="card space-y-4">
-        <h2 className="font-semibold">{t("Enregistrer une performance", "Log a performance")}</h2>
-        <p className="text-sm text-[rgb(var(--muted))]">
-          {t(
-            "Saisis tes séries en une fois : nombre de séries, répétitions et charge.",
-            "Enter your sets at once: number of sets, reps and weight."
-          )}
-        </p>
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <NumField label={t("Nb de séries", "Sets")} value={sets} onChange={setSets} />
-          <NumField label={t("Répétitions", "Reps")} value={reps} onChange={setReps} />
-          <NumField label={t("Charge (kg)", "Weight (kg)")} value={weight} onChange={setWeight} step="0.5" />
-          <div>
-            <label className="label">{t("Notes", "Notes")}</label>
-            <input className="input" value={notes} onChange={(e) => setNotes(e.target.value)} />
+      {active ? (
+        <form onSubmit={addEntry} className="card space-y-4">
+          <h2 className="font-semibold">{t("Ajouter à la séance", "Add to workout")}</h2>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <NumField label={t("Nb de séries", "Sets")} value={sets} onChange={setSets} />
+            <NumField label={t("Répétitions", "Reps")} value={reps} onChange={setReps} />
+            <NumField label={t("Charge (kg)", "Weight (kg)")} value={weight} onChange={setWeight} step="0.5" />
+            <div>
+              <label className="label">{t("Notes", "Notes")}</label>
+              <input className="input" value={notes} onChange={(e) => setNotes(e.target.value)} />
+            </div>
           </div>
+          {error && <p className="text-sm text-red-500">{error}</p>}
+          <button type="submit" className="btn-primary">{t("Ajouter", "Add")}</button>
+        </form>
+      ) : (
+        <div className="card space-y-3 text-center">
+          <p className="text-sm text-[rgb(var(--muted))]">
+            {t(
+              "Démarre une séance pour enregistrer une performance.",
+              "Start a workout to log a performance."
+            )}
+          </p>
+          <button onClick={() => { haptic(); start(); }} className="btn-primary">
+            {t("Commencer une séance", "Start a workout")}
+          </button>
         </div>
-        <button type="submit" className="btn-primary">{t("Ajouter", "Add")}</button>
-      </form>
+      )}
 
       <div className="card">
         <h2 className="mb-2 font-semibold">{t("Progression de la charge", "Weight progression")}</h2>

@@ -123,6 +123,7 @@ model WorkoutSession {
   userId    String
   user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   date      DateTime     @default(now())
+  endedAt   DateTime?
   notes     String?
   sets      WorkoutSet[]
   createdAt DateTime     @default(now())

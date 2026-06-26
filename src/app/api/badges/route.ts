@@ -8,8 +8,8 @@ export async function GET() {
   try {
     const userId = await requireUserId();
 
-    const [sessionCount, mealCount, logs, maxSet] = await Promise.all([
-      prisma.workoutSession.count({ where: { userId } }),
+    const [finishedSessions, mealCount, logs, maxSet] = await Promise.all([
+      prisma.workoutSession.findMany({ where: { userId, endedAt: { not: null } }, select: { date: true } }),
       prisma.meal.count({ where: { userId } }),
       prisma.dailyLog.findMany({
         where: { userId },
@@ -39,6 +39,10 @@ export async function GET() {
       }
       if (len > bestStreak) bestStreak = len;
     }
+
+    const sessionCount = new Set(
+      finishedSessions.map((s) => s.date.toISOString().slice(0, 10))
+    ).size;
 
     const badges = computeBadges({
       sessionCount,

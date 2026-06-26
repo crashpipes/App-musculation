@@ -2,5 +2,5 @@ export { default } from "next-auth/middleware";
 
 // Protège l'espace privé : toute route du groupe (app) exige une session.
 export const config = {
-  matcher: ["/dashboard/:path*", "/tracking/:path*", "/exercises/:path*", "/routines/:path*", "/badges/:path*", "/profile/:path*", "/settings/:path*"]
+  matcher: ["/dashboard/:path*", "/tracking/:path*", "/workout/:path*", "/exercises/:path*", "/routines/:path*", "/badges/:path*", "/profile/:path*", "/settings/:path*"]
 };

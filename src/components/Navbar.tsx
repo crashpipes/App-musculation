@@ -16,6 +16,7 @@ export function Navbar() {
   const links = [
     { href: "/dashboard", label: t("Tableau de bord", "Dashboard") },
     { href: "/tracking", label: t("Suivi", "Tracking") },
+    { href: "/workout", label: t("Séance", "Workout") },
     { href: "/exercises", label: t("Exercices", "Exercises") },
     { href: "/routines", label: t("Programmes", "Routines") },
     { href: "/badges", label: t("Badges", "Badges") },

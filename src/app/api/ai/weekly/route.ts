@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
       prisma.profile.findUnique({ where: { userId } }),
       prisma.dailyLog.findMany({ where: { userId, date: { gte: from } }, orderBy: { date: "asc" } }),
       prisma.weightEntry.findMany({ where: { userId, date: { gte: from } }, orderBy: { date: "asc" } }),
-      prisma.workoutSession.count({ where: { userId, date: { gte: from } } }),
+      prisma.workoutSession.count({ where: { userId, endedAt: { not: null }, date: { gte: from } } }),
       prisma.workoutSet.findMany({
         where: { session: { userId }, date: { gte: from } },
         include: { exercise: true }
