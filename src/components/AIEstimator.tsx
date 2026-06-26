@@ -1,11 +1,17 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { apiSend } from "@/lib/fetcher";
 import type { EstimateResult, FoodItem } from "@/lib/ai";
 
 type Mode = "photo" | "foods";
+
+interface SelectedImage {
+  base64: string;
+  mime: string;
+  preview: string;
+}
 
 export function AIEstimator({
   day,
@@ -15,11 +21,65 @@ export function AIEstimator({
   onAdded: () => void;
 }) {
   const [mode, setMode] = useState<Mode>("photo");
-  const [image, setImage] = useState<{ base64: string; mime: string } | null>(null);
+  const [image, setImage] = useState<SelectedImage | null>(null);
   const [foods, setFoods] = useState<FoodItem[]>([{ name: "", grams: 100 }]);
   const [result, setResult] = useState<EstimateResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [cameraOn, setCameraOn] = useState(false);
+
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+
+  function stopCamera() {
+    streamRef.current?.getTracks().forEach((t) => t.stop());
+    streamRef.current = null;
+    setCameraOn(false);
+  }
+
+  // Arrête la caméra si le composant est démonté.
+  useEffect(() => () => stopCamera(), []);
+
+  async function startCamera() {
+    setError(null);
+    setResult(null);
+    if (!navigator.mediaDevices?.getUserMedia) {
+      setError("Caméra non disponible sur cet appareil.");
+      return;
+    }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: "environment" },
+        audio: false
+      });
+      streamRef.current = stream;
+      setCameraOn(true);
+      setTimeout(() => {
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+          videoRef.current.play().catch(() => {});
+        }
+      }, 50);
+    } catch {
+      setError(
+        "Impossible d'accéder à la caméra. Autorise l'accès ou utilise l'ajout de fichier."
+      );
+    }
+  }
+
+  function capturePhoto() {
+    const video = videoRef.current;
+    if (!video) return;
+    const canvas = document.createElement("canvas");
+    canvas.width = video.videoWidth || 720;
+    canvas.height = video.videoHeight || 720;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    const dataUrl = canvas.toDataURL("image/jpeg", 0.85);
+    setImage({ base64: dataUrl.split(",")[1] ?? "", mime: "image/jpeg", preview: dataUrl });
+    stopCamera();
+  }
 
   function onFile(file: File | null) {
     setResult(null);
@@ -31,8 +91,11 @@ export function AIEstimator({
     const reader = new FileReader();
     reader.onload = () => {
       const url = String(reader.result);
-      const base64 = url.split(",")[1] ?? "";
-      setImage({ base64, mime: file.type || "image/jpeg" });
+      setImage({
+        base64: url.split(",")[1] ?? "",
+        mime: file.type || "image/jpeg",
+        preview: url
+      });
       setError(null);
     };
     reader.readAsDataURL(file);
@@ -50,10 +113,7 @@ export function AIEstimator({
       const body =
         mode === "photo"
           ? { mode, imageBase64: image?.base64, mimeType: image?.mime }
-          : {
-              mode,
-              foods: foods.filter((f) => f.name.trim() && f.grams > 0)
-            };
+          : { mode, foods: foods.filter((f) => f.name.trim() && f.grams > 0) };
       const res = await apiSend<{ result: EstimateResult }>(
         "/api/ai/estimate",
         "POST",
@@ -99,6 +159,7 @@ export function AIEstimator({
               setMode(m);
               setResult(null);
               setError(null);
+              stopCamera();
             }}
             className={mode === m ? "btn-primary !py-1.5 text-xs" : "btn-ghost !py-1.5 text-xs"}
           >
@@ -108,19 +169,55 @@ export function AIEstimator({
       </div>
 
       {mode === "photo" ? (
-        <div>
-          <label className="label">Photo du plat</label>
-          <input
-            type="file"
-            accept="image/*"
-            className="input"
-            onChange={(e) => onFile(e.target.files?.[0] ?? null)}
-          />
+        <div className="space-y-3">
+          {cameraOn ? (
+            <div className="space-y-2">
+              <video
+                ref={videoRef}
+                playsInline
+                muted
+                className="w-full max-w-sm rounded-xl bg-black"
+              />
+              <div className="flex gap-2">
+                <button type="button" onClick={capturePhoto} className="btn-primary">
+                  Capturer
+                </button>
+                <button type="button" onClick={stopCamera} className="btn-ghost">
+                  Annuler
+                </button>
+              </div>
+            </div>
+          ) : (
+            <>
+              <div className="flex flex-wrap gap-2">
+                <button type="button" onClick={startCamera} className="btn-ghost text-sm">
+                  📸 Prendre une photo
+                </button>
+                <label className="btn-ghost cursor-pointer text-sm">
+                  📁 Choisir un fichier
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => onFile(e.target.files?.[0] ?? null)}
+                  />
+                </label>
+              </div>
+              {image && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={image.preview}
+                  alt="Aperçu du plat"
+                  className="max-h-48 rounded-xl object-cover"
+                />
+              )}
+            </>
+          )}
         </div>
       ) : (
         <div className="space-y-2">
           {foods.map((f, i) => (
-            <div key={i} className="flex gap-2">
+            <div key={i} className="flex items-center gap-2">
               <input
                 className="input flex-1"
                 placeholder="Aliment (ex. poulet)"
@@ -131,10 +228,10 @@ export function AIEstimator({
                 type="number"
                 min={1}
                 className="input w-24"
-                placeholder="g"
                 value={f.grams}
                 onChange={(e) => updateFood(i, { grams: Number(e.target.value) })}
               />
+              <span className="text-sm text-[rgb(var(--muted))]">g</span>
               {foods.length > 1 && (
                 <button
                   type="button"
@@ -156,14 +253,16 @@ export function AIEstimator({
         </div>
       )}
 
-      <button
-        type="button"
-        onClick={estimate}
-        disabled={loading || (mode === "photo" && !image)}
-        className="btn-primary"
-      >
-        {loading ? "Estimation en cours…" : "Estimer"}
-      </button>
+      {!cameraOn && (
+        <button
+          type="button"
+          onClick={estimate}
+          disabled={loading || (mode === "photo" && !image)}
+          className="btn-primary"
+        >
+          {loading ? "Estimation en cours…" : "Estimer"}
+        </button>
+      )}
 
       {error && <p className="text-sm text-red-500">{error}</p>}
 
