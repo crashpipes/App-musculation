@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { apiSend } from "@/lib/fetcher";
+import { useI18n } from "@/lib/i18n";
 import type { EstimateResult, FoodItem } from "@/lib/ai";
 
 type Mode = "photo" | "foods";
@@ -20,6 +21,7 @@ export function AIEstimator({
   day: string;
   onAdded: () => void;
 }) {
+  const { t } = useI18n();
   const [mode, setMode] = useState<Mode>("photo");
   const [image, setImage] = useState<SelectedImage | null>(null);
   const [foods, setFoods] = useState<FoodItem[]>([{ name: "", grams: 100 }]);
@@ -32,19 +34,18 @@ export function AIEstimator({
   const streamRef = useRef<MediaStream | null>(null);
 
   function stopCamera() {
-    streamRef.current?.getTracks().forEach((t) => t.stop());
+    streamRef.current?.getTracks().forEach((tr) => tr.stop());
     streamRef.current = null;
     setCameraOn(false);
   }
 
-  // Arrête la caméra si le composant est démonté.
   useEffect(() => () => stopCamera(), []);
 
   async function startCamera() {
     setError(null);
     setResult(null);
     if (!navigator.mediaDevices?.getUserMedia) {
-      setError("Caméra non disponible sur cet appareil.");
+      setError(t("Caméra non disponible sur cet appareil.", "Camera not available on this device."));
       return;
     }
     try {
@@ -62,7 +63,10 @@ export function AIEstimator({
       }, 50);
     } catch {
       setError(
-        "Impossible d'accéder à la caméra. Autorise l'accès ou utilise l'ajout de fichier."
+        t(
+          "Impossible d'accéder à la caméra. Autorise l'accès ou utilise l'ajout de fichier.",
+          "Cannot access the camera. Allow access or use file upload."
+        )
       );
     }
   }
@@ -85,17 +89,13 @@ export function AIEstimator({
     setResult(null);
     if (!file) return setImage(null);
     if (file.size > 5 * 1024 * 1024) {
-      setError("Image trop lourde (max 5 Mo).");
+      setError(t("Image trop lourde (max 5 Mo).", "Image too large (max 5 MB)."));
       return;
     }
     const reader = new FileReader();
     reader.onload = () => {
       const url = String(reader.result);
-      setImage({
-        base64: url.split(",")[1] ?? "",
-        mime: file.type || "image/jpeg",
-        preview: url
-      });
+      setImage({ base64: url.split(",")[1] ?? "", mime: file.type || "image/jpeg", preview: url });
       setError(null);
     };
     reader.readAsDataURL(file);
@@ -114,14 +114,10 @@ export function AIEstimator({
         mode === "photo"
           ? { mode, imageBase64: image?.base64, mimeType: image?.mime }
           : { mode, foods: foods.filter((f) => f.name.trim() && f.grams > 0) };
-      const res = await apiSend<{ result: EstimateResult }>(
-        "/api/ai/estimate",
-        "POST",
-        body
-      );
+      const res = await apiSend<{ result: EstimateResult }>("/api/ai/estimate", "POST", body);
       setResult(res.result);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Erreur");
+      setError(err instanceof Error ? err.message : t("Erreur", "Error"));
     } finally {
       setLoading(false);
     }
@@ -144,9 +140,9 @@ export function AIEstimator({
   return (
     <div className="card space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 className="font-semibold">🤖 Estimer avec l&apos;IA</h2>
+        <h2 className="font-semibold">{t("🤖 Estimer avec l'IA", "🤖 Estimate with AI")}</h2>
         <Link href="/settings" className="text-xs text-brand-600 hover:underline">
-          Configurer l&apos;IA
+          {t("Configurer l'IA", "Configure AI")}
         </Link>
       </div>
 
@@ -163,7 +159,7 @@ export function AIEstimator({
             }}
             className={mode === m ? "btn-primary !py-1.5 text-xs" : "btn-ghost !py-1.5 text-xs"}
           >
-            {m === "photo" ? "📷 Photo du plat" : "⚖️ Aliments (grammes)"}
+            {m === "photo" ? t("📷 Photo du plat", "📷 Meal photo") : t("⚖️ Aliments (grammes)", "⚖️ Foods (grams)")}
           </button>
         ))}
       </div>
@@ -172,44 +168,26 @@ export function AIEstimator({
         <div className="space-y-3">
           {cameraOn ? (
             <div className="space-y-2">
-              <video
-                ref={videoRef}
-                playsInline
-                muted
-                className="w-full max-w-sm rounded-xl bg-black"
-              />
+              <video ref={videoRef} playsInline muted className="w-full max-w-sm rounded-xl bg-black" />
               <div className="flex gap-2">
-                <button type="button" onClick={capturePhoto} className="btn-primary">
-                  Capturer
-                </button>
-                <button type="button" onClick={stopCamera} className="btn-ghost">
-                  Annuler
-                </button>
+                <button type="button" onClick={capturePhoto} className="btn-primary">{t("Capturer", "Capture")}</button>
+                <button type="button" onClick={stopCamera} className="btn-ghost">{t("Annuler", "Cancel")}</button>
               </div>
             </div>
           ) : (
             <>
               <div className="flex flex-wrap gap-2">
                 <button type="button" onClick={startCamera} className="btn-ghost text-sm">
-                  📸 Prendre une photo
+                  {t("📸 Prendre une photo", "📸 Take a photo")}
                 </button>
                 <label className="btn-ghost cursor-pointer text-sm">
-                  📁 Choisir un fichier
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={(e) => onFile(e.target.files?.[0] ?? null)}
-                  />
+                  {t("📁 Choisir un fichier", "📁 Choose a file")}
+                  <input type="file" accept="image/*" className="hidden" onChange={(e) => onFile(e.target.files?.[0] ?? null)} />
                 </label>
               </div>
               {image && (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={image.preview}
-                  alt="Aperçu du plat"
-                  className="max-h-48 rounded-xl object-cover"
-                />
+                <img src={image.preview} alt={t("Aperçu du plat", "Meal preview")} className="max-h-48 rounded-xl object-cover" />
               )}
             </>
           )}
@@ -220,7 +198,7 @@ export function AIEstimator({
             <div key={i} className="flex items-center gap-2">
               <input
                 className="input flex-1"
-                placeholder="Aliment (ex. poulet)"
+                placeholder={t("Aliment (ex. poulet)", "Food (e.g. chicken)")}
                 value={f.name}
                 onChange={(e) => updateFood(i, { name: e.target.value })}
               />
@@ -248,7 +226,7 @@ export function AIEstimator({
             onClick={() => setFoods((arr) => [...arr, { name: "", grams: 100 }])}
             className="text-sm text-brand-600 hover:underline"
           >
-            + Ajouter un aliment
+            {t("+ Ajouter un aliment", "+ Add a food")}
           </button>
         </div>
       )}
@@ -260,7 +238,7 @@ export function AIEstimator({
           disabled={loading || (mode === "photo" && !image)}
           className="btn-primary"
         >
-          {loading ? "Estimation en cours…" : "Estimer"}
+          {loading ? t("Estimation en cours…", "Estimating…") : t("Estimer", "Estimate")}
         </button>
       )}
 
@@ -271,17 +249,11 @@ export function AIEstimator({
           <p className="font-semibold">{result.label}</p>
           <p className="mt-1 text-sm">
             <span className="font-bold">{result.calories}</span> kcal ·{" "}
-            <span className="font-bold">{result.proteinG}</span> g de protéines
+            <span className="font-bold">{result.proteinG}</span> {t("g de protéines", "g protein")}
           </p>
-          {result.note && (
-            <p className="mt-1 text-xs text-[rgb(var(--muted))]">{result.note}</p>
-          )}
-          <p className="mt-1 text-xs text-[rgb(var(--muted))]">
-            Estimation approximative.
-          </p>
-          <button onClick={addToDay} className="btn-primary mt-3">
-            Ajouter à ma journée
-          </button>
+          {result.note && <p className="mt-1 text-xs text-[rgb(var(--muted))]">{result.note}</p>}
+          <p className="mt-1 text-xs text-[rgb(var(--muted))]">{t("Estimation approximative.", "Approximate estimate.")}</p>
+          <button onClick={addToDay} className="btn-primary mt-3">{t("Ajouter à ma journée", "Add to my day")}</button>
         </div>
       )}
     </div>

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { LanguageToggle } from "@/components/LanguageToggle";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
 export default function AuthLayout({
@@ -12,7 +13,10 @@ export default function AuthLayout({
         <Link href="/" className="text-lg font-extrabold">
           💪 <span className="text-brand-600">MuscuTrack</span>
         </Link>
-        <ThemeToggle />
+        <div className="flex items-center gap-2">
+          <LanguageToggle />
+          <ThemeToggle />
+        </div>
       </header>
       <main className="flex flex-1 items-center justify-center px-6 pb-16">
         <div className="w-full max-w-sm">{children}</div>

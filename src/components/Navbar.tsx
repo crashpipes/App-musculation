@@ -3,19 +3,22 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
+import { useI18n } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
+import { LanguageToggle } from "./LanguageToggle";
 import { ThemeToggle } from "./ThemeToggle";
-
-const LINKS = [
-  { href: "/dashboard", label: "Tableau de bord" },
-  { href: "/tracking", label: "Suivi" },
-  { href: "/exercises", label: "Exercices" },
-  { href: "/profile", label: "Profil" },
-  { href: "/settings", label: "Réglages" }
-];
 
 export function Navbar() {
   const pathname = usePathname();
+  const { t } = useI18n();
+
+  const links = [
+    { href: "/dashboard", label: t("Tableau de bord", "Dashboard") },
+    { href: "/tracking", label: t("Suivi", "Tracking") },
+    { href: "/exercises", label: t("Exercices", "Exercises") },
+    { href: "/profile", label: t("Profil", "Profile") },
+    { href: "/settings", label: t("Réglages", "Settings") }
+  ];
 
   return (
     <header className="sticky top-0 z-40 border-b border-[rgb(var(--border))] bg-[rgb(var(--background))]/80 backdrop-blur">
@@ -25,7 +28,7 @@ export function Navbar() {
         </Link>
 
         <nav className="hidden gap-1 sm:flex">
-          {LINKS.map((l) => (
+          {links.map((l) => (
             <Link
               key={l.href}
               href={l.href}
@@ -42,18 +45,19 @@ export function Navbar() {
         </nav>
 
         <div className="flex items-center gap-2">
+          <LanguageToggle />
           <ThemeToggle />
           <button
             onClick={() => signOut({ callbackUrl: "/login" })}
             className="btn-ghost"
           >
-            Déconnexion
+            {t("Déconnexion", "Sign out")}
           </button>
         </div>
       </div>
 
       <nav className="flex gap-1 overflow-x-auto px-4 pb-2 sm:hidden">
-        {LINKS.map((l) => (
+        {links.map((l) => (
           <Link
             key={l.href}
             href={l.href}

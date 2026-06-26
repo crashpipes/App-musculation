@@ -1,12 +1,13 @@
 "use client";
 
 import { format, subDays } from "date-fns";
-import { fr } from "date-fns/locale";
+import { enUS, fr } from "date-fns/locale";
 import { useEffect, useMemo, useState } from "react";
 import { AIEstimator } from "@/components/AIEstimator";
 import { LineProgressChart } from "@/components/charts/LineProgressChart";
 import { ProgressRing } from "@/components/ProgressRing";
 import { apiGet, apiSend } from "@/lib/fetcher";
+import { useI18n } from "@/lib/i18n";
 import type { DailyLog, Meal, WeightEntry } from "@prisma/client";
 import type { ProfileResponse } from "@/types";
 
@@ -17,6 +18,8 @@ function localDay(): string {
 }
 
 export default function TrackingPage() {
+  const { t, locale } = useI18n();
+  const dl = locale === "en" ? enUS : fr;
   const [logs, setLogs] = useState<DailyLog[]>([]);
   const [meals, setMeals] = useState<Meal[]>([]);
   const [weights, setWeights] = useState<WeightEntry[]>([]);
@@ -66,7 +69,7 @@ export default function TrackingPage() {
     setLabel("");
     setCalories("");
     setProteinG("");
-    setMsg("Repas ajouté ✓");
+    setMsg(t("Repas ajouté ✓", "Meal added ✓"));
     load();
   }
 
@@ -87,7 +90,7 @@ export default function TrackingPage() {
     if (!weightKg) return;
     await apiSend("/api/weight", "POST", { weightKg: Number(weightKg) });
     setWeightKg("");
-    setMsg("Poids enregistré ✓");
+    setMsg(t("Poids enregistré ✓", "Weight saved ✓"));
     load();
   }
 
@@ -95,107 +98,64 @@ export default function TrackingPage() {
 
   const calorieSeries = logs
     .filter((l) => new Date(l.date) >= from)
-    .map((l) => ({
-      label: format(new Date(l.date), "dd/MM", { locale: fr }),
-      value: l.calories
-    }));
+    .map((l) => ({ label: format(new Date(l.date), "dd/MM", { locale: dl }), value: l.calories }));
   const proteinSeries = logs
     .filter((l) => new Date(l.date) >= from)
-    .map((l) => ({
-      label: format(new Date(l.date), "dd/MM", { locale: fr }),
-      value: l.proteinG
-    }));
+    .map((l) => ({ label: format(new Date(l.date), "dd/MM", { locale: dl }), value: l.proteinG }));
   const weightSeries = weights
     .filter((w) => new Date(w.date) >= from)
-    .map((w) => ({
-      label: format(new Date(w.date), "dd/MM", { locale: fr }),
-      value: w.weightKg
-    }));
+    .map((w) => ({ label: format(new Date(w.date), "dd/MM", { locale: dl }), value: w.weightKg }));
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">Suivi quotidien</h1>
+      <h1 className="text-2xl font-bold">{t("Suivi quotidien", "Daily tracking")}</h1>
 
       {targets && (
         <div className="card">
-          <h2 className="mb-4 font-semibold">Aujourd&apos;hui</h2>
+          <h2 className="mb-4 font-semibold">{t("Aujourd'hui", "Today")}</h2>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-            <ProgressRing
-              label="Calories"
-              unit=" kcal"
-              value={todayLog?.calories ?? 0}
-              target={targets.calorieTarget}
-              color="#4f46e5"
-            />
-            <ProgressRing
-              label="Protéines"
-              unit=" g"
-              value={todayLog?.proteinG ?? 0}
-              target={targets.proteinTargetG}
-              color="#16a34a"
-            />
-            <ProgressRing
-              label="Eau"
-              unit=" ml"
-              value={todayLog?.waterMl ?? 0}
-              target={targets.waterTargetMl}
-              color="#0ea5e9"
-            />
+            <ProgressRing label={t("Calories", "Calories")} unit=" kcal" value={todayLog?.calories ?? 0} target={targets.calorieTarget} color="#4f46e5" />
+            <ProgressRing label={t("Protéines", "Protein")} unit=" g" value={todayLog?.proteinG ?? 0} target={targets.proteinTargetG} color="#16a34a" />
+            <ProgressRing label={t("Eau", "Water")} unit=" ml" value={todayLog?.waterMl ?? 0} target={targets.waterTargetMl} color="#0ea5e9" />
           </div>
         </div>
       )}
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <form onSubmit={addMeal} className="card space-y-4 lg:col-span-2">
-          <h2 className="font-semibold">Ajouter un repas</h2>
+          <h2 className="font-semibold">{t("Ajouter un repas", "Add a meal")}</h2>
           <p className="text-sm text-[rgb(var(--muted))]">
-            Chaque repas s&apos;ajoute au total de la journée.
+            {t("Chaque repas s'ajoute au total de la journée.", "Each meal adds to the day's total.")}
           </p>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
             <div>
-              <label className="label">Repas (optionnel)</label>
+              <label className="label">{t("Repas (optionnel)", "Meal (optional)")}</label>
               <input
                 className="input"
-                placeholder="Petit-déjeuner…"
+                placeholder={t("Petit-déjeuner…", "Breakfast…")}
                 value={label}
                 onChange={(e) => setLabel(e.target.value)}
               />
             </div>
-            <NumField label="Calories (kcal)" value={calories} onChange={setCalories} />
-            <NumField label="Protéines (g)" value={proteinG} onChange={setProteinG} />
+            <NumField label={t("Calories (kcal)", "Calories (kcal)")} value={calories} onChange={setCalories} />
+            <NumField label={t("Protéines (g)", "Protein (g)")} value={proteinG} onChange={setProteinG} />
           </div>
-          <button type="submit" className="btn-primary">Ajouter le repas</button>
+          <button type="submit" className="btn-primary">{t("Ajouter le repas", "Add meal")}</button>
         </form>
 
         <div className="card space-y-4">
-          <h2 className="font-semibold">Ajouter de l&apos;eau</h2>
+          <h2 className="font-semibold">{t("Ajouter de l'eau", "Add water")}</h2>
           <div className="flex flex-wrap gap-2">
             {[250, 500, 750].map((ml) => (
-              <button
-                key={ml}
-                type="button"
-                onClick={() => addWater(ml)}
-                className="btn-ghost text-sm"
-              >
+              <button key={ml} type="button" onClick={() => addWater(ml)} className="btn-ghost text-sm">
                 +{ml} ml
               </button>
             ))}
           </div>
           <div className="flex gap-2">
-            <input
-              type="number"
-              min={1}
-              className="input"
-              placeholder="ml"
-              value={waterAmount}
-              onChange={(e) => setWaterAmount(e.target.value)}
-            />
-            <button
-              type="button"
-              onClick={() => addWater(Number(waterAmount || 0))}
-              className="btn-primary"
-            >
-              Ajouter
+            <input type="number" min={1} className="input" placeholder="ml" value={waterAmount} onChange={(e) => setWaterAmount(e.target.value)} />
+            <button type="button" onClick={() => addWater(Number(waterAmount || 0))} className="btn-primary">
+              {t("Ajouter", "Add")}
             </button>
           </div>
         </div>
@@ -204,22 +164,19 @@ export default function TrackingPage() {
       <AIEstimator day={localDay()} onAdded={load} />
 
       <div className="card">
-        <h2 className="mb-3 font-semibold">Repas d&apos;aujourd&apos;hui</h2>
+        <h2 className="mb-3 font-semibold">{t("Repas d'aujourd'hui", "Today's meals")}</h2>
         {meals.length === 0 ? (
-          <p className="text-sm text-[rgb(var(--muted))]">Aucun repas enregistré aujourd&apos;hui.</p>
+          <p className="text-sm text-[rgb(var(--muted))]">
+            {t("Aucun repas enregistré aujourd'hui.", "No meals logged today.")}
+          </p>
         ) : (
           <ul className="divide-y divide-[rgb(var(--border))]">
             {meals.map((m) => (
               <li key={m.id} className="flex items-center justify-between py-2 text-sm">
-                <span className="font-medium">{m.label || "Repas"}</span>
+                <span className="font-medium">{m.label || t("Repas", "Meal")}</span>
                 <span className="flex items-center gap-3 text-[rgb(var(--muted))]">
                   {m.calories} kcal · {m.proteinG} g
-                  <button
-                    onClick={() => deleteMeal(m.id)}
-                    className="text-red-500 hover:underline"
-                  >
-                    ✕
-                  </button>
+                  <button onClick={() => deleteMeal(m.id)} className="text-red-500 hover:underline">✕</button>
                 </span>
               </li>
             ))}
@@ -228,47 +185,39 @@ export default function TrackingPage() {
       </div>
 
       <form onSubmit={saveWeight} className="card space-y-4">
-        <h2 className="font-semibold">Poids du jour</h2>
+        <h2 className="font-semibold">{t("Poids du jour", "Today's weight")}</h2>
         <div className="flex gap-2">
-          <input
-            type="number"
-            min={0}
-            step="0.1"
-            className="input"
-            placeholder="kg"
-            value={weightKg}
-            onChange={(e) => setWeightKg(e.target.value)}
-          />
-          <button type="submit" className="btn-primary">Ajouter</button>
+          <input type="number" min={0} step="0.1" className="input" placeholder="kg" value={weightKg} onChange={(e) => setWeightKg(e.target.value)} />
+          <button type="submit" className="btn-primary">{t("Ajouter", "Add")}</button>
         </div>
       </form>
 
       {msg && <p className="text-sm text-green-600">{msg}</p>}
 
       <div className="flex items-center gap-2">
-        <span className="text-sm text-[rgb(var(--muted))]">Période :</span>
+        <span className="text-sm text-[rgb(var(--muted))]">{t("Période :", "Period:")}</span>
         {([7, 30, 90] as Range[]).map((r) => (
           <button
             key={r}
             onClick={() => setRange(r)}
             className={range === r ? "btn-primary !py-1.5 text-xs" : "btn-ghost !py-1.5 text-xs"}
           >
-            {r === 7 ? "Semaine" : r === 30 ? "Mois" : "3 mois"}
+            {r === 7 ? t("Semaine", "Week") : r === 30 ? t("Mois", "Month") : t("3 mois", "3 months")}
           </button>
         ))}
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <div className="card">
-          <h2 className="mb-2 font-semibold">Calories</h2>
+          <h2 className="mb-2 font-semibold">{t("Calories", "Calories")}</h2>
           <LineProgressChart data={calorieSeries} color="#4f46e5" unit=" kcal" />
         </div>
         <div className="card">
-          <h2 className="mb-2 font-semibold">Protéines</h2>
+          <h2 className="mb-2 font-semibold">{t("Protéines", "Protein")}</h2>
           <LineProgressChart data={proteinSeries} color="#16a34a" unit=" g" />
         </div>
         <div className="card lg:col-span-2">
-          <h2 className="mb-2 font-semibold">Poids</h2>
+          <h2 className="mb-2 font-semibold">{t("Poids", "Weight")}</h2>
           <LineProgressChart data={weightSeries} color="#0ea5e9" unit=" kg" />
         </div>
       </div>
@@ -288,13 +237,7 @@ function NumField({
   return (
     <div>
       <label className="label">{label}</label>
-      <input
-        type="number"
-        min={0}
-        className="input"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-      />
+      <input type="number" min={0} className="input" value={value} onChange={(e) => onChange(e.target.value)} />
     </div>
   );
 }

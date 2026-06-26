@@ -3,11 +3,12 @@
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { format } from "date-fns";
-import { fr } from "date-fns/locale";
+import { enUS, fr } from "date-fns/locale";
 import { useEffect, useMemo, useState } from "react";
 import { LineProgressChart } from "@/components/charts/LineProgressChart";
 import { StatCard } from "@/components/StatCard";
 import { apiGet, apiSend } from "@/lib/fetcher";
+import { useI18n } from "@/lib/i18n";
 import type { Exercise, WorkoutSet } from "@prisma/client";
 
 interface DetailResponse {
@@ -19,6 +20,8 @@ interface DetailResponse {
 export default function ExerciseDetailPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
+  const { t, locale } = useI18n();
+  const dl = locale === "en" ? enUS : fr;
   const [data, setData] = useState<DetailResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -32,7 +35,7 @@ export default function ExerciseDetailPage() {
       const res = await apiGet<DetailResponse>(`/api/exercises/${params.id}`);
       setData(res);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Erreur");
+      setError(e instanceof Error ? e.message : t("Erreur", "Error"));
     }
   }
   useEffect(() => {
@@ -60,7 +63,7 @@ export default function ExerciseDetailPage() {
   }
 
   async function deleteExercise() {
-    if (!confirm("Supprimer cet exercice et son historique ?")) return;
+    if (!confirm(t("Supprimer cet exercice et son historique ?", "Delete this exercise and its history?"))) return;
     await apiSend(`/api/exercises/${params.id}`, "DELETE");
     router.push("/exercises");
   }
@@ -68,28 +71,24 @@ export default function ExerciseDetailPage() {
   const series = useMemo(
     () =>
       (data?.sets ?? []).map((s) => ({
-        label: format(new Date(s.date), "dd/MM", { locale: fr }),
+        label: format(new Date(s.date), "dd/MM", { locale: dl }),
         value: s.weightKg
       })),
-    [data]
+    [data, dl]
   );
 
   const totalVolume = useMemo(
-    () =>
-      (data?.sets ?? []).reduce(
-        (sum, s) => sum + s.sets * s.reps * s.weightKg,
-        0
-      ),
+    () => (data?.sets ?? []).reduce((sum, s) => sum + s.sets * s.reps * s.weightKg, 0),
     [data]
   );
 
   if (error) return <p className="text-red-500">{error}</p>;
-  if (!data) return <p className="text-[rgb(var(--muted))]">Chargement…</p>;
+  if (!data) return <p className="text-[rgb(var(--muted))]">{t("Chargement…", "Loading…")}</p>;
 
   return (
     <div className="space-y-6">
       <Link href="/exercises" className="text-sm text-brand-600 hover:underline">
-        ← Tous les exercices
+        {t("← Tous les exercices", "← All exercises")}
       </Link>
 
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -102,65 +101,55 @@ export default function ExerciseDetailPage() {
         </div>
         {!data.exercise.isPreset && (
           <button onClick={deleteExercise} className="btn-ghost text-red-500">
-            Supprimer
+            {t("Supprimer", "Delete")}
           </button>
         )}
       </div>
 
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-        <StatCard label="🏆 Record (PR)" value={`${data.personalRecord} kg`} />
-        <StatCard label="Entrées enregistrées" value={data.sets.length} />
-        <StatCard label="Volume total" value={`${Math.round(totalVolume)} kg`} />
+        <StatCard label={t("🏆 Record (PR)", "🏆 Record (PR)")} value={`${data.personalRecord} kg`} />
+        <StatCard label={t("Entrées enregistrées", "Logged entries")} value={data.sets.length} />
+        <StatCard label={t("Volume total", "Total volume")} value={`${Math.round(totalVolume)} kg`} />
       </div>
 
       <form onSubmit={addEntry} className="card space-y-4">
-        <h2 className="font-semibold">Enregistrer une performance</h2>
+        <h2 className="font-semibold">{t("Enregistrer une performance", "Log a performance")}</h2>
         <p className="text-sm text-[rgb(var(--muted))]">
-          Saisis tes séries en une fois : nombre de séries, répétitions et charge.
+          {t(
+            "Saisis tes séries en une fois : nombre de séries, répétitions et charge.",
+            "Enter your sets at once: number of sets, reps and weight."
+          )}
         </p>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <NumField label="Nb de séries" value={sets} onChange={setSets} />
-          <NumField label="Répétitions" value={reps} onChange={setReps} />
-          <NumField label="Charge (kg)" value={weight} onChange={setWeight} step="0.5" />
+          <NumField label={t("Nb de séries", "Sets")} value={sets} onChange={setSets} />
+          <NumField label={t("Répétitions", "Reps")} value={reps} onChange={setReps} />
+          <NumField label={t("Charge (kg)", "Weight (kg)")} value={weight} onChange={setWeight} step="0.5" />
           <div>
-            <label className="label">Notes</label>
-            <input
-              className="input"
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-            />
+            <label className="label">{t("Notes", "Notes")}</label>
+            <input className="input" value={notes} onChange={(e) => setNotes(e.target.value)} />
           </div>
         </div>
-        <button type="submit" className="btn-primary">Ajouter</button>
+        <button type="submit" className="btn-primary">{t("Ajouter", "Add")}</button>
       </form>
 
       <div className="card">
-        <h2 className="mb-2 font-semibold">Progression de la charge</h2>
+        <h2 className="mb-2 font-semibold">{t("Progression de la charge", "Weight progression")}</h2>
         <LineProgressChart data={series} color="#4f46e5" unit=" kg" />
       </div>
 
       <div className="card">
-        <h2 className="mb-3 font-semibold">Historique</h2>
+        <h2 className="mb-3 font-semibold">{t("Historique", "History")}</h2>
         {data.sets.length === 0 ? (
-          <p className="text-sm text-[rgb(var(--muted))]">Aucune performance enregistrée.</p>
+          <p className="text-sm text-[rgb(var(--muted))]">{t("Aucune performance enregistrée.", "No performance logged yet.")}</p>
         ) : (
           <ul className="divide-y divide-[rgb(var(--border))]">
             {[...data.sets].reverse().map((s) => (
               <li key={s.id} className="flex items-center justify-between py-2 text-sm">
-                <span>{format(new Date(s.date), "dd/MM/yyyy", { locale: fr })}</span>
+                <span>{format(new Date(s.date), "dd/MM/yyyy", { locale: dl })}</span>
                 <span className="flex items-center gap-3">
-                  <span className="font-medium">
-                    {s.sets} × {s.reps} @ {s.weightKg} kg
-                  </span>
-                  {s.notes && (
-                    <span className="text-[rgb(var(--muted))]">{s.notes}</span>
-                  )}
-                  <button
-                    onClick={() => deleteSet(s.id)}
-                    className="text-red-500 hover:underline"
-                  >
-                    ✕
-                  </button>
+                  <span className="font-medium">{s.sets} × {s.reps} @ {s.weightKg} kg</span>
+                  {s.notes && <span className="text-[rgb(var(--muted))]">{s.notes}</span>}
+                  <button onClick={() => deleteSet(s.id)} className="text-red-500 hover:underline">✕</button>
                 </span>
               </li>
             ))}
@@ -185,14 +174,7 @@ function NumField({
   return (
     <div>
       <label className="label">{label}</label>
-      <input
-        type="number"
-        min={0}
-        step={step ?? "1"}
-        className="input"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-      />
+      <input type="number" min={0} step={step ?? "1"} className="input" value={value} onChange={(e) => onChange(e.target.value)} />
     </div>
   );
 }
