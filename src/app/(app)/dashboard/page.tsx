@@ -138,7 +138,7 @@ export default function DashboardPage() {
               <li key={s.id} className="flex items-center justify-between py-2 text-sm">
                 <span className="font-medium">{s.exercise.name}</span>
                 <span className="text-[rgb(var(--muted))]">
-                  {s.reps} reps × {s.weightKg} kg ·{" "}
+                  {s.sets} × {s.reps} @ {s.weightKg} kg ·{" "}
                   {format(new Date(s.date), "dd/MM", { locale: fr })}
                 </span>
               </li>

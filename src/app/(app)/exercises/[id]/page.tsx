@@ -22,7 +22,7 @@ export default function ExerciseDetailPage() {
   const [data, setData] = useState<DetailResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const [setNumber, setSetNumber] = useState("1");
+  const [sets, setSets] = useState("3");
   const [reps, setReps] = useState("");
   const [weight, setWeight] = useState("");
   const [notes, setNotes] = useState("");
@@ -39,11 +39,11 @@ export default function ExerciseDetailPage() {
     load();
   }, [params.id]);
 
-  async function addSet(e: React.FormEvent) {
+  async function addEntry(e: React.FormEvent) {
     e.preventDefault();
     await apiSend("/api/sets", "POST", {
       exerciseId: params.id,
-      setNumber: Number(setNumber || 1),
+      sets: Number(sets || 1),
       reps: Number(reps || 0),
       weightKg: Number(weight || 0),
       notes: notes || undefined
@@ -51,7 +51,6 @@ export default function ExerciseDetailPage() {
     setReps("");
     setWeight("");
     setNotes("");
-    setSetNumber(String(Number(setNumber) + 1));
     load();
   }
 
@@ -76,7 +75,11 @@ export default function ExerciseDetailPage() {
   );
 
   const totalVolume = useMemo(
-    () => (data?.sets ?? []).reduce((sum, s) => sum + s.reps * s.weightKg, 0),
+    () =>
+      (data?.sets ?? []).reduce(
+        (sum, s) => sum + s.sets * s.reps * s.weightKg,
+        0
+      ),
     [data]
   );
 
@@ -90,23 +93,12 @@ export default function ExerciseDetailPage() {
       </Link>
 
       <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="flex gap-4">
-          {data.exercise.imageUploadId && (
-            // Image privée servie via API authentifiée
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={`/api/uploads/${data.exercise.imageUploadId}`}
-              alt={data.exercise.name}
-              className="h-20 w-20 rounded-xl object-cover"
-            />
+        <div>
+          <h1 className="text-2xl font-bold">{data.exercise.name}</h1>
+          <p className="text-[rgb(var(--muted))]">{data.exercise.muscleGroup}</p>
+          {data.exercise.description && (
+            <p className="mt-1 max-w-prose text-sm">{data.exercise.description}</p>
           )}
-          <div>
-            <h1 className="text-2xl font-bold">{data.exercise.name}</h1>
-            <p className="text-[rgb(var(--muted))]">{data.exercise.muscleGroup}</p>
-            {data.exercise.description && (
-              <p className="mt-1 max-w-prose text-sm">{data.exercise.description}</p>
-            )}
-          </div>
         </div>
         {!data.exercise.isPreset && (
           <button onClick={deleteExercise} className="btn-ghost text-red-500">
@@ -117,14 +109,17 @@ export default function ExerciseDetailPage() {
 
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
         <StatCard label="🏆 Record (PR)" value={`${data.personalRecord} kg`} />
-        <StatCard label="Séries enregistrées" value={data.sets.length} />
+        <StatCard label="Entrées enregistrées" value={data.sets.length} />
         <StatCard label="Volume total" value={`${Math.round(totalVolume)} kg`} />
       </div>
 
-      <form onSubmit={addSet} className="card space-y-4">
-        <h2 className="font-semibold">Enregistrer une série</h2>
+      <form onSubmit={addEntry} className="card space-y-4">
+        <h2 className="font-semibold">Enregistrer une performance</h2>
+        <p className="text-sm text-[rgb(var(--muted))]">
+          Saisis tes séries en une fois : nombre de séries, répétitions et charge.
+        </p>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <NumField label="Série n°" value={setNumber} onChange={setSetNumber} />
+          <NumField label="Nb de séries" value={sets} onChange={setSets} />
           <NumField label="Répétitions" value={reps} onChange={setReps} />
           <NumField label="Charge (kg)" value={weight} onChange={setWeight} step="0.5" />
           <div>
@@ -136,7 +131,7 @@ export default function ExerciseDetailPage() {
             />
           </div>
         </div>
-        <button type="submit" className="btn-primary">Ajouter la série</button>
+        <button type="submit" className="btn-primary">Ajouter</button>
       </form>
 
       <div className="card">
@@ -147,18 +142,15 @@ export default function ExerciseDetailPage() {
       <div className="card">
         <h2 className="mb-3 font-semibold">Historique</h2>
         {data.sets.length === 0 ? (
-          <p className="text-sm text-[rgb(var(--muted))]">Aucune série enregistrée.</p>
+          <p className="text-sm text-[rgb(var(--muted))]">Aucune performance enregistrée.</p>
         ) : (
           <ul className="divide-y divide-[rgb(var(--border))]">
             {[...data.sets].reverse().map((s) => (
               <li key={s.id} className="flex items-center justify-between py-2 text-sm">
-                <span>
-                  {format(new Date(s.date), "dd/MM/yyyy", { locale: fr })} · série{" "}
-                  {s.setNumber}
-                </span>
+                <span>{format(new Date(s.date), "dd/MM/yyyy", { locale: fr })}</span>
                 <span className="flex items-center gap-3">
                   <span className="font-medium">
-                    {s.reps} × {s.weightKg} kg
+                    {s.sets} × {s.reps} @ {s.weightKg} kg
                   </span>
                   {s.notes && (
                     <span className="text-[rgb(var(--muted))]">{s.notes}</span>

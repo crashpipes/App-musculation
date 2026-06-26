@@ -47,8 +47,7 @@ export async function PUT(
       data: {
         name: data.name,
         muscleGroup: data.muscleGroup,
-        description: data.description || null,
-        imageUploadId: data.imageUploadId ?? null
+        description: data.description || null
       }
     });
     return NextResponse.json({ exercise });

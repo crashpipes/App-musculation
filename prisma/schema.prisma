@@ -37,9 +37,9 @@ model User {
   profile        Profile?
   weightEntries  WeightEntry[]
   dailyLogs      DailyLog[]
+  meals          Meal[]
   exercises      Exercise[]
   sessions       WorkoutSession[]
-  uploads        Upload[]
   resetTokens    PasswordResetToken[]
 }
 
@@ -68,7 +68,8 @@ model WeightEntry {
   @@index([userId, date])
 }
 
-// Un enregistrement par jour et par utilisateur (cumul nutrition + eau)
+// Cumul nutrition + eau, un enregistrement par jour et par utilisateur.
+// Incrémenté à chaque repas / ajout d'eau de la journée.
 model DailyLog {
   id           String   @id @default(cuid())
   userId       String
@@ -84,13 +85,25 @@ model DailyLog {
   @@index([userId, date])
 }
 
+// Un repas saisi dans la journée (s'additionne au DailyLog du jour).
+model Meal {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date      DateTime @db.Date
+  label     String?
+  calories  Int
+  proteinG  Int
+  createdAt DateTime @default(now())
+
+  @@index([userId, date])
+}
+
 model Exercise {
   id            String           @id @default(cuid())
   name          String
   muscleGroup   String
   description   String?
-  imageUploadId String?
-  imageUpload   Upload?          @relation(fields: [imageUploadId], references: [id], onDelete: SetNull)
   isPreset      Boolean          @default(false)
   // null pour les exercices préchargés partagés ; sinon propriétaire
   userId        String?
@@ -114,33 +127,20 @@ model WorkoutSession {
   @@index([userId, date])
 }
 
+// Une performance saisie en une fois : `sets` séries de `reps` répétitions à `weightKg`.
 model WorkoutSet {
   id         String          @id @default(cuid())
   sessionId  String
   session    WorkoutSession  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
   exerciseId String
   exercise   Exercise        @relation(fields: [exerciseId], references: [id], onDelete: Cascade)
-  setNumber  Int
+  sets       Int             @default(1)
   reps       Int
   weightKg   Float
   notes      String?
   date       DateTime        @default(now())
 
   @@index([exerciseId, date])
-}
-
-// Métadonnées des fichiers uploadés (images privées)
-model Upload {
-  id          String     @id @default(cuid())
-  userId      String
-  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  filename    String
-  mimeType    String
-  sizeBytes   Int
-  createdAt   DateTime   @default(now())
-  exercises   Exercise[]
-
-  @@index([userId])
 }
 
 model PasswordResetToken {

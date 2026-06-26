@@ -111,7 +111,6 @@ function CustomExerciseForm({ onCreated }: { onCreated: () => void }) {
   const [name, setName] = useState("");
   const [group, setGroup] = useState(MUSCLE_GROUPS[0]!);
   const [description, setDescription] = useState("");
-  const [file, setFile] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -120,20 +119,10 @@ function CustomExerciseForm({ onCreated }: { onCreated: () => void }) {
     setError(null);
     setLoading(true);
     try {
-      let imageUploadId: string | undefined;
-      if (file) {
-        const fd = new FormData();
-        fd.append("file", file);
-        const res = await fetch("/api/uploads", { method: "POST", body: fd });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error ?? "Upload échoué");
-        imageUploadId = data.uploadId;
-      }
       await apiSend("/api/exercises", "POST", {
         name,
         muscleGroup: group,
-        description: description || undefined,
-        imageUploadId
+        description: description || undefined
       });
       onCreated();
     } catch (err) {
@@ -171,15 +160,6 @@ function CustomExerciseForm({ onCreated }: { onCreated: () => void }) {
           className="input min-h-20"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
-        />
-      </div>
-      <div>
-        <label className="label">Image (privée, JPEG/PNG/WebP, max 5 Mo)</label>
-        <input
-          type="file"
-          accept="image/jpeg,image/png,image/webp"
-          className="input"
-          onChange={(e) => setFile(e.target.files?.[0] ?? null)}
         />
       </div>
       {error && <p className="text-sm text-red-500">{error}</p>}

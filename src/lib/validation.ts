@@ -38,11 +38,18 @@ export const profileSchema = z.object({
   ])
 });
 
-export const dailyLogSchema = z.object({
-  date: z.coerce.date().optional(),
+// Un repas qui s'ajoute au total de la journée. `day` = jour local (YYYY-MM-DD).
+export const mealSchema = z.object({
+  day: z.coerce.date().optional(),
+  label: z.string().trim().max(60).optional().or(z.literal("")),
   calories: z.coerce.number().int().min(0).max(20000),
-  proteinG: z.coerce.number().int().min(0).max(1000),
-  waterMl: z.coerce.number().int().min(0).max(20000)
+  proteinG: z.coerce.number().int().min(0).max(1000)
+});
+
+// Ajout d'eau qui s'additionne sur la journée.
+export const waterSchema = z.object({
+  day: z.coerce.date().optional(),
+  amountMl: z.coerce.number().int().min(1).max(10000)
 });
 
 export const weightEntrySchema = z.object({
@@ -53,15 +60,15 @@ export const weightEntrySchema = z.object({
 export const exerciseSchema = z.object({
   name: z.string().trim().min(1, "Nom requis").max(100),
   muscleGroup: z.string().trim().min(1, "Groupe musculaire requis").max(60),
-  description: z.string().trim().max(1000).optional().or(z.literal("")),
-  imageUploadId: z.string().cuid().optional().nullable()
+  description: z.string().trim().max(1000).optional().or(z.literal(""))
 });
 
+// Saisie rapide : `sets` séries de `reps` répétitions à `weightKg`.
 export const workoutSetSchema = z.object({
   exerciseId: z.string().cuid(),
   date: z.coerce.date().optional(),
   sessionId: z.string().cuid().optional(),
-  setNumber: z.coerce.number().int().min(1).max(50),
+  sets: z.coerce.number().int().min(1).max(50),
   reps: z.coerce.number().int().min(0).max(1000),
   weightKg: z.coerce.number().min(0).max(1000),
   notes: z.string().trim().max(500).optional().or(z.literal(""))
@@ -69,6 +76,7 @@ export const workoutSetSchema = z.object({
 
 export type RegisterInput = z.infer<typeof registerSchema>;
 export type ProfileInput = z.infer<typeof profileSchema>;
-export type DailyLogInput = z.infer<typeof dailyLogSchema>;
+export type MealInput = z.infer<typeof mealSchema>;
+export type WaterInput = z.infer<typeof waterSchema>;
 export type WorkoutSetInput = z.infer<typeof workoutSetSchema>;
 export type ExerciseInput = z.infer<typeof exerciseSchema>;

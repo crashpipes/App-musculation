@@ -2,10 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { handleApiError } from "@/lib/api";
 import { requireUserId } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { toDayStart, todayKey } from "@/lib/utils";
-import { dailyLogSchema } from "@/lib/validation";
+import { toDayStart } from "@/lib/utils";
 
-// Liste des logs (optionnellement depuis ?from=YYYY-MM-DD)
+// Liste des totaux journaliers (optionnellement depuis ?from=YYYY-MM-DD).
+// Les totaux sont alimentés par les repas et les ajouts d'eau (voir /api/meals, /api/water).
 export async function GET(req: NextRequest) {
   try {
     const userId = await requireUserId();
@@ -19,35 +19,6 @@ export async function GET(req: NextRequest) {
       orderBy: { date: "asc" }
     });
     return NextResponse.json({ logs });
-  } catch (error) {
-    return handleApiError(error);
-  }
-}
-
-// Upsert du log d'une journée (par défaut aujourd'hui)
-export async function PUT(req: NextRequest) {
-  try {
-    const userId = await requireUserId();
-    const input = dailyLogSchema.parse(await req.json());
-    const date = input.date ? toDayStart(input.date) : todayKey();
-
-    const log = await prisma.dailyLog.upsert({
-      where: { userId_date: { userId, date } },
-      create: {
-        userId,
-        date,
-        calories: input.calories,
-        proteinG: input.proteinG,
-        waterMl: input.waterMl
-      },
-      update: {
-        calories: input.calories,
-        proteinG: input.proteinG,
-        waterMl: input.waterMl
-      }
-    });
-
-    return NextResponse.json({ log });
   } catch (error) {
     return handleApiError(error);
   }

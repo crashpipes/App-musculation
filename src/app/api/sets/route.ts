@@ -50,7 +50,7 @@ export async function POST(req: NextRequest) {
       data: {
         sessionId,
         exerciseId: data.exerciseId,
-        setNumber: data.setNumber,
+        sets: data.sets,
         reps: data.reps,
         weightKg: data.weightKg,
         notes: data.notes || null,

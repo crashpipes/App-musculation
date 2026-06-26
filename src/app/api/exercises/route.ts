@@ -30,20 +30,11 @@ export async function POST(req: NextRequest) {
     const userId = await requireUserId();
     const data = exerciseSchema.parse(await req.json());
 
-    // Vérifie que l'image éventuelle appartient bien à l'utilisateur
-    if (data.imageUploadId) {
-      const upload = await prisma.upload.findFirst({
-        where: { id: data.imageUploadId, userId }
-      });
-      if (!upload) throw new Error("NOT_FOUND");
-    }
-
     const exercise = await prisma.exercise.create({
       data: {
         name: data.name,
         muscleGroup: data.muscleGroup,
         description: data.description || null,
-        imageUploadId: data.imageUploadId ?? null,
         isPreset: false,
         userId
       }
