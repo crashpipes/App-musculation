@@ -40,6 +40,7 @@ model User {
   meals          Meal[]
   exercises      Exercise[]
   sessions       WorkoutSession[]
+  routines       Routine[]
   resetTokens    PasswordResetToken[]
   aiSetting      AISetting?
 }
@@ -76,6 +77,8 @@ model DailyLog {
   date         DateTime @db.Date
   calories     Int      @default(0)
   proteinG     Int      @default(0)
+  carbsG       Int      @default(0)
+  fatG         Int      @default(0)
   waterMl      Int      @default(0)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
@@ -92,21 +95,24 @@ model Meal {
   label     String?
   calories  Int
   proteinG  Int
+  carbsG    Int      @default(0)
+  fatG      Int      @default(0)
   createdAt DateTime @default(now())
 
   @@index([userId, date])
 }
 
 model Exercise {
-  id            String           @id @default(cuid())
-  name          String
-  muscleGroup   String
-  description   String?
-  isPreset      Boolean          @default(false)
-  userId        String?
-  user          User?            @relation(fields: [userId], references: [id], onDelete: Cascade)
-  sets          WorkoutSet[]
-  createdAt     DateTime         @default(now())
+  id              String            @id @default(cuid())
+  name            String
+  muscleGroup     String
+  description     String?
+  isPreset        Boolean           @default(false)
+  userId          String?
+  user            User?             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sets            WorkoutSet[]
+  routineEntries  RoutineExercise[]
+  createdAt       DateTime          @default(now())
 
   @@index([userId])
   @@index([muscleGroup])
@@ -137,6 +143,30 @@ model WorkoutSet {
   date       DateTime        @default(now())
 
   @@index([exerciseId, date])
+}
+
+model Routine {
+  id        String            @id @default(cuid())
+  userId    String
+  user      User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String
+  createdAt DateTime          @default(now())
+  exercises RoutineExercise[]
+
+  @@index([userId])
+}
+
+model RoutineExercise {
+  id         String   @id @default(cuid())
+  routineId  String
+  routine    Routine  @relation(fields: [routineId], references: [id], onDelete: Cascade)
+  exerciseId String
+  exercise   Exercise @relation(fields: [exerciseId], references: [id], onDelete: Cascade)
+  order      Int      @default(0)
+  targetSets Int      @default(3)
+  targetReps Int      @default(10)
+
+  @@index([routineId])
 }
 
 model PasswordResetToken {

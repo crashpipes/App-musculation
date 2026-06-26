@@ -31,6 +31,8 @@ export default function TrackingPage() {
   const [label, setLabel] = useState("");
   const [calories, setCalories] = useState("");
   const [proteinG, setProteinG] = useState("");
+  const [carbsG, setCarbsG] = useState("");
+  const [fatG, setFatG] = useState("");
   const [waterAmount, setWaterAmount] = useState("");
   const [weightKg, setWeightKg] = useState("");
 
@@ -59,18 +61,22 @@ export default function TrackingPage() {
 
   async function addMeal(e: React.FormEvent) {
     e.preventDefault();
-    if (!calories && !proteinG) return;
+    if (!calories && !proteinG && !carbsG && !fatG) return;
     setMsg(null);
     haptic();
     await apiSend("/api/meals", "POST", {
       day: localDay(),
       label: label || undefined,
       calories: Number(calories || 0),
-      proteinG: Number(proteinG || 0)
+      proteinG: Number(proteinG || 0),
+      carbsG: Number(carbsG || 0),
+      fatG: Number(fatG || 0)
     });
     setLabel("");
     setCalories("");
     setProteinG("");
+    setCarbsG("");
+    setFatG("");
     setMsg(t("Repas ajouté ✓", "Meal added ✓"));
     load();
   }
@@ -115,12 +121,18 @@ export default function TrackingPage() {
       <h1 className="text-2xl font-bold">{t("Suivi quotidien", "Daily tracking")}</h1>
 
       {targets && (
-        <div className="card">
-          <h2 className="mb-4 font-semibold">{t("Aujourd'hui", "Today")}</h2>
+        <div className="card space-y-4">
+          <h2 className="font-semibold">{t("Aujourd'hui", "Today")}</h2>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <ProgressRing label={t("Calories", "Calories")} unit=" kcal" value={todayLog?.calories ?? 0} target={targets.calorieTarget} color="#4f46e5" />
             <ProgressRing label={t("Protéines", "Protein")} unit=" g" value={todayLog?.proteinG ?? 0} target={targets.proteinTargetG} color="#16a34a" />
             <ProgressRing label={t("Eau", "Water")} unit=" ml" value={todayLog?.waterMl ?? 0} target={targets.waterTargetMl} color="#0ea5e9" />
+          </div>
+          {/* Répartition des macros */}
+          <div className="grid grid-cols-3 gap-3">
+            <MacroBar label={t("Protéines", "Protein")} value={todayLog?.proteinG ?? 0} target={targets.proteinTargetG} color="#16a34a" />
+            <MacroBar label={t("Glucides", "Carbs")} value={todayLog?.carbsG ?? 0} target={targets.carbsTargetG} color="#f59e0b" />
+            <MacroBar label={t("Lipides", "Fat")} value={todayLog?.fatG ?? 0} target={targets.fatTargetG} color="#ef4444" />
           </div>
         </div>
       )}
@@ -131,18 +143,20 @@ export default function TrackingPage() {
           <p className="text-sm text-[rgb(var(--muted))]">
             {t("Chaque repas s'ajoute au total de la journée.", "Each meal adds to the day's total.")}
           </p>
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-            <div>
-              <label className="label">{t("Repas (optionnel)", "Meal (optional)")}</label>
-              <input
-                className="input"
-                placeholder={t("Petit-déjeuner…", "Breakfast…")}
-                value={label}
-                onChange={(e) => setLabel(e.target.value)}
-              />
-            </div>
-            <NumField label={t("Calories (kcal)", "Calories (kcal)")} value={calories} onChange={setCalories} />
+          <div>
+            <label className="label">{t("Repas (optionnel)", "Meal (optional)")}</label>
+            <input
+              className="input"
+              placeholder={t("Petit-déjeuner…", "Breakfast…")}
+              value={label}
+              onChange={(e) => setLabel(e.target.value)}
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <NumField label={t("Calories", "Calories")} value={calories} onChange={setCalories} />
             <NumField label={t("Protéines (g)", "Protein (g)")} value={proteinG} onChange={setProteinG} />
+            <NumField label={t("Glucides (g)", "Carbs (g)")} value={carbsG} onChange={setCarbsG} />
+            <NumField label={t("Lipides (g)", "Fat (g)")} value={fatG} onChange={setFatG} />
           </div>
           <button type="submit" className="btn-primary">{t("Ajouter le repas", "Add meal")}</button>
         </form>
@@ -179,7 +193,7 @@ export default function TrackingPage() {
               <li key={m.id} className="flex items-center justify-between py-2 text-sm">
                 <span className="font-medium">{m.label || t("Repas", "Meal")}</span>
                 <span className="flex items-center gap-3 text-[rgb(var(--muted))]">
-                  {m.calories} kcal · {m.proteinG} g
+                  {m.calories} kcal · {m.proteinG}P {m.carbsG}G {m.fatG}L
                   <button onClick={() => deleteMeal(m.id)} className="text-red-500 hover:underline">✕</button>
                 </span>
               </li>
@@ -242,6 +256,31 @@ function NumField({
     <div>
       <label className="label">{label}</label>
       <input type="number" min={0} className="input" value={value} onChange={(e) => onChange(e.target.value)} />
+    </div>
+  );
+}
+
+function MacroBar({
+  label,
+  value,
+  target,
+  color
+}: {
+  label: string;
+  value: number;
+  target: number;
+  color: string;
+}) {
+  const pct = target > 0 ? Math.min(100, Math.round((value / target) * 100)) : 0;
+  return (
+    <div>
+      <div className="mb-1 flex justify-between text-xs">
+        <span className="font-medium">{label}</span>
+        <span className="text-[rgb(var(--muted))]">{value} / {target} g</span>
+      </div>
+      <div className="h-2 overflow-hidden rounded-full bg-[rgb(var(--border))]">
+        <div className="h-full rounded-full" style={{ width: `${pct}%`, backgroundColor: color }} />
+      </div>
     </div>
   );
 }

@@ -8,6 +8,7 @@ import { BarTargetChart } from "@/components/charts/BarTargetChart";
 import { LineProgressChart } from "@/components/charts/LineProgressChart";
 import { ProgressRing } from "@/components/ProgressRing";
 import { StatCard } from "@/components/StatCard";
+import { WeeklyAnalysis } from "@/components/WeeklyAnalysis";
 import { apiGet } from "@/lib/fetcher";
 import { exName } from "@/lib/exercise-i18n";
 import { useI18n } from "@/lib/i18n";
@@ -66,6 +67,11 @@ export default function DashboardPage() {
           🔥 {streak}{" "}
           {t(`jour${streak > 1 ? "s" : ""} de suite`, `day${streak > 1 ? "s" : ""} streak`)}
         </span>
+      </div>
+
+      <div className="flex flex-wrap gap-2">
+        <Link href="/routines" className="btn-ghost text-sm">{t("📋 Programmes", "📋 Routines")}</Link>
+        <Link href="/badges" className="btn-ghost text-sm">{t("🏅 Badges", "🏅 Badges")}</Link>
       </div>
 
       <div className="card">
@@ -158,6 +164,8 @@ export default function DashboardPage() {
           </ul>
         )}
       </div>
+
+      <WeeklyAnalysis />
     </div>
   );
 }

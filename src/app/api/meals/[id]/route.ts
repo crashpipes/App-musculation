@@ -21,7 +21,9 @@ export async function DELETE(
         where: { userId, date: meal.date },
         data: {
           calories: { decrement: meal.calories },
-          proteinG: { decrement: meal.proteinG }
+          proteinG: { decrement: meal.proteinG },
+          carbsG: { decrement: meal.carbsG },
+          fatG: { decrement: meal.fatG }
         }
       })
     ]);

@@ -9,6 +9,7 @@ import { LineProgressChart } from "@/components/charts/LineProgressChart";
 import { StatCard } from "@/components/StatCard";
 import { apiGet, apiSend } from "@/lib/fetcher";
 import { haptic } from "@/lib/haptics";
+import { bestEstimated1RM } from "@/lib/onerm";
 import { exName, muscleName } from "@/lib/exercise-i18n";
 import { useI18n } from "@/lib/i18n";
 import type { Exercise, WorkoutSet } from "@prisma/client";
@@ -85,6 +86,8 @@ export default function ExerciseDetailPage() {
     [data]
   );
 
+  const oneRM = useMemo(() => bestEstimated1RM(data?.sets ?? []), [data]);
+
   if (error) return <p className="text-red-500">{error}</p>;
   if (!data) return <p className="text-[rgb(var(--muted))]">{t("Chargement…", "Loading…")}</p>;
 
@@ -109,8 +112,9 @@ export default function ExerciseDetailPage() {
         )}
       </div>
 
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
         <StatCard label={t("🏆 Record (PR)", "🏆 Record (PR)")} value={`${data.personalRecord} kg`} />
+        <StatCard label={t("💥 1RM estimé", "💥 Est. 1RM")} value={`${oneRM} kg`} />
         <StatCard label={t("Entrées enregistrées", "Logged entries")} value={data.sets.length} />
         <StatCard label={t("Volume total", "Total volume")} value={`${Math.round(totalVolume)} kg`} />
       </div>

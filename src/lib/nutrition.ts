@@ -88,7 +88,24 @@ export interface NutritionTargets {
   tdee: number;
   calorieTarget: number;
   proteinTargetG: number;
+  carbsTargetG: number;
+  fatTargetG: number;
   waterTargetMl: number;
+}
+
+/** Objectif lipides (g/jour) : ~25% des calories (9 kcal/g). */
+export function calculateFatTarget(calorieTarget: number): number {
+  return Math.round((calorieTarget * 0.25) / 9);
+}
+
+/** Objectif glucides (g/jour) : calories restantes après protéines et lipides (4 kcal/g). */
+export function calculateCarbTarget(
+  calorieTarget: number,
+  proteinG: number,
+  fatG: number
+): number {
+  const remaining = calorieTarget - proteinG * 4 - fatG * 9;
+  return Math.max(0, Math.round(remaining / 4));
 }
 
 /** Calcule l'ensemble des objectifs à partir des données de profil. */
@@ -111,5 +128,16 @@ export function computeTargets(input: {
   const calorieTarget = calculateCalorieTarget(tdee, input.goal);
   const proteinTargetG = calculateProteinTarget(input.weightKg, input.goal);
   const waterTargetMl = calculateWaterTarget(input.weightKg);
-  return { age, bmr, tdee, calorieTarget, proteinTargetG, waterTargetMl };
+  const fatTargetG = calculateFatTarget(calorieTarget);
+  const carbsTargetG = calculateCarbTarget(calorieTarget, proteinTargetG, fatTargetG);
+  return {
+    age,
+    bmr,
+    tdee,
+    calorieTarget,
+    proteinTargetG,
+    carbsTargetG,
+    fatTargetG,
+    waterTargetMl
+  };
 }

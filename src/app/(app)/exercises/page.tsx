@@ -53,9 +53,12 @@ export default function ExercisesPage() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-bold">{t("Exercices", "Exercises")}</h1>
-        <button onClick={() => setShowForm((s) => !s)} className="btn-primary">
-          {showForm ? t("Fermer", "Close") : t("+ Exercice personnalisé", "+ Custom exercise")}
-        </button>
+        <div className="flex gap-2">
+          <Link href="/routines" className="btn-ghost">{t("Programmes", "Routines")}</Link>
+          <button onClick={() => setShowForm((s) => !s)} className="btn-primary">
+            {showForm ? t("Fermer", "Close") : t("+ Exercice personnalisé", "+ Custom exercise")}
+          </button>
+        </div>
       </div>
 
       {showForm && (

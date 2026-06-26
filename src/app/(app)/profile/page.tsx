@@ -181,6 +181,8 @@ export default function ProfilePage() {
             <hr className="border-[rgb(var(--border))]" />
             <Row label={t("🎯 Calories / jour", "🎯 Calories / day")} value={`${preview.calorieTarget} kcal`} big />
             <Row label={t("🥩 Protéines / jour", "🥩 Protein / day")} value={`${preview.proteinTargetG} g`} big />
+            <Row label={t("🍚 Glucides / jour", "🍚 Carbs / day")} value={`${preview.carbsTargetG} g`} big />
+            <Row label={t("🥑 Lipides / jour", "🥑 Fat / day")} value={`${preview.fatTargetG} g`} big />
             <Row label={t("💧 Eau / jour", "💧 Water / day")} value={`${(preview.waterTargetMl / 1000).toFixed(1)} L`} big />
           </dl>
         ) : (

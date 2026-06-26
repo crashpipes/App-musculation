@@ -37,7 +37,23 @@ export const mealSchema = z.object({
   day: z.coerce.date().optional(),
   label: z.string().trim().max(60).optional().or(z.literal("")),
   calories: z.coerce.number().int().min(0).max(20000),
-  proteinG: z.coerce.number().int().min(0).max(1000)
+  proteinG: z.coerce.number().int().min(0).max(1000),
+  carbsG: z.coerce.number().int().min(0).max(2000).optional(),
+  fatG: z.coerce.number().int().min(0).max(2000).optional()
+});
+
+export const routineSchema = z.object({
+  name: z.string().trim().min(1, "Nom requis").max(60),
+  exercises: z
+    .array(
+      z.object({
+        exerciseId: z.string().cuid(),
+        targetSets: z.coerce.number().int().min(1).max(20),
+        targetReps: z.coerce.number().int().min(1).max(100)
+      })
+    )
+    .min(1, "Au moins un exercice")
+    .max(30)
 });
 
 // Ajout d'eau qui s'additionne sur la journée.
@@ -101,6 +117,7 @@ export type AiEstimateInput = z.infer<typeof aiEstimateSchema>;
 export type RegisterInput = z.infer<typeof registerSchema>;
 export type ProfileInput = z.infer<typeof profileSchema>;
 export type MealInput = z.infer<typeof mealSchema>;
+export type RoutineInput = z.infer<typeof routineSchema>;
 export type WaterInput = z.infer<typeof waterSchema>;
 export type WorkoutSetInput = z.infer<typeof workoutSetSchema>;
 export type ExerciseInput = z.infer<typeof exerciseSchema>;

@@ -28,6 +28,8 @@ export async function POST(req: NextRequest) {
     const userId = await requireUserId();
     const input = mealSchema.parse(await req.json());
     const day = input.day ? toDayStart(input.day) : todayKey();
+    const carbsG = input.carbsG ?? 0;
+    const fatG = input.fatG ?? 0;
 
     const [meal] = await prisma.$transaction([
       prisma.meal.create({
@@ -36,7 +38,9 @@ export async function POST(req: NextRequest) {
           date: day,
           label: input.label || null,
           calories: input.calories,
-          proteinG: input.proteinG
+          proteinG: input.proteinG,
+          carbsG,
+          fatG
         }
       }),
       prisma.dailyLog.upsert({
@@ -46,11 +50,15 @@ export async function POST(req: NextRequest) {
           date: day,
           calories: input.calories,
           proteinG: input.proteinG,
+          carbsG,
+          fatG,
           waterMl: 0
         },
         update: {
           calories: { increment: input.calories },
-          proteinG: { increment: input.proteinG }
+          proteinG: { increment: input.proteinG },
+          carbsG: { increment: carbsG },
+          fatG: { increment: fatG }
         }
       })
     ]);

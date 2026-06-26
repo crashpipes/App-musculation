@@ -22,6 +22,11 @@ Application web (et PWA installable) de suivi de musculation et de nutrition. Ch
 - **Tableau de bord** : anneaux de progression, évolution du poids, streak, dernières séries.
 - **Exercices** : 25 exercices préchargés + exercices personnalisés. Saisie rapide d'une performance (nb de séries × répétitions × charge), record personnel (PR), volume total, graphiques.
 - **Assistant IA (optionnel)** : l'utilisateur connecte sa propre clé API (OpenAI, Anthropic ou Google Gemini, chiffrée en base). Estimation des calories/protéines d'un plat par **photo** (vision, fichier ou caméra) ou par **liste d'aliments en grammes**, avec ajout en un clic à la journée.
+- **Programmes / routines** : créer des séances types (liste d'exercices avec séries/reps cibles) et les dérouler en mode séance guidée (cases à cocher).
+- **Macros** : suivi des glucides et lipides en plus des protéines, avec cibles calculées et barres de progression ; l'IA estime aussi les macros.
+- **1RM estimé** : charge maximale estimée par exercice (formule d'Epley).
+- **Badges / objectifs** : récompenses débloquées selon la progression (séances, streak, force…).
+- **Analyse hebdo IA** : résumé à la demande des 7 derniers jours (nutrition, séances, poids).
 - **Bilingue FR/EN** : bouton de bascule, choix mémorisé.
 - **Mobile / PWA** : barre de navigation inférieure, bouton flottant d'ajout rapide, retour haptique, zones sûres (encoches), installable comme une app.
 

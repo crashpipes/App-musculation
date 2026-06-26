@@ -131,7 +131,9 @@ export function AIEstimator({
       day,
       label: result.label,
       calories: result.calories,
-      proteinG: result.proteinG
+      proteinG: result.proteinG,
+      carbsG: result.carbsG,
+      fatG: result.fatG
     });
     setResult(null);
     setImage(null);
@@ -252,6 +254,9 @@ export function AIEstimator({
           <p className="mt-1 text-sm">
             <span className="font-bold">{result.calories}</span> kcal ·{" "}
             <span className="font-bold">{result.proteinG}</span> {t("g de protéines", "g protein")}
+          </p>
+          <p className="text-sm text-[rgb(var(--muted))]">
+            {t("Glucides", "Carbs")} {result.carbsG} g · {t("Lipides", "Fat")} {result.fatG} g
           </p>
           {result.note && <p className="mt-1 text-xs text-[rgb(var(--muted))]">{result.note}</p>}
           <p className="mt-1 text-xs text-[rgb(var(--muted))]">{t("Estimation approximative.", "Approximate estimate.")}</p>

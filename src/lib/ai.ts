@@ -23,6 +23,8 @@ export interface FoodItem {
 export interface EstimateResult {
   calories: number;
   proteinG: number;
+  carbsG: number;
+  fatG: number;
   label: string;
   note: string;
 }
@@ -38,9 +40,9 @@ export interface EstimateInput {
 }
 
 const SYSTEM_INSTRUCTION =
-  "Tu es un nutritionniste. Estime les calories totales et les protéines totales (en grammes) du plat. " +
+  "Tu es un nutritionniste. Estime les totaux du plat : calories, protéines, glucides et lipides (en grammes). " +
   'Réponds UNIQUEMENT avec un objet JSON valide, sans texte autour, au format exact : ' +
-  '{"calories": <entier>, "proteinG": <entier>, "label": "<nom court du plat>", "note": "<courte explication en français>"}.';
+  '{"calories": <entier>, "proteinG": <entier>, "carbsG": <entier>, "fatG": <entier>, "label": "<nom court du plat>", "note": "<courte explication en français>"}.';
 
 function buildUserText(input: EstimateInput): string {
   if (input.mode === "foods" && input.foods?.length) {
@@ -60,6 +62,8 @@ function parseResult(raw: string): EstimateResult {
   return {
     calories: Math.max(0, Math.round(Number(obj.calories ?? 0))),
     proteinG: Math.max(0, Math.round(Number(obj.proteinG ?? 0))),
+    carbsG: Math.max(0, Math.round(Number(obj.carbsG ?? 0))),
+    fatG: Math.max(0, Math.round(Number(obj.fatG ?? 0))),
     label: String(obj.label ?? "Plat").slice(0, 60),
     note: String(obj.note ?? "").slice(0, 300)
   };
@@ -159,4 +163,64 @@ export async function estimateNutrition(input: EstimateInput): Promise<EstimateR
   else if (input.provider === "anthropic") raw = await callAnthropic(input, text);
   else raw = await callGoogle(input, text);
   return parseResult(raw);
+}
+
+
+// Appel texte générique (sans image, sans JSON imposé) — utilisé pour l'analyse hebdo.
+export async function askAI(params: {
+  provider: AiProvider;
+  apiKey: string;
+  model?: string | null;
+  system: string;
+  user: string;
+}): Promise<string> {
+  const { provider, apiKey, model, system, user } = params;
+  if (provider === "openai") {
+    const res = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
+      body: JSON.stringify({
+        model: model || DEFAULT_MODELS.openai,
+        messages: [
+          { role: "system", content: system },
+          { role: "user", content: user }
+        ],
+        max_tokens: 500
+      })
+    });
+    if (!res.ok) throw await providerError(res);
+    const data = (await res.json()) as { choices?: { message?: { content?: string } }[] };
+    return data.choices?.[0]?.message?.content ?? "";
+  }
+  if (provider === "anthropic") {
+    const res = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": apiKey,
+        "anthropic-version": "2023-06-01"
+      },
+      body: JSON.stringify({
+        model: model || DEFAULT_MODELS.anthropic,
+        max_tokens: 500,
+        system,
+        messages: [{ role: "user", content: user }]
+      })
+    });
+    if (!res.ok) throw await providerError(res);
+    const data = (await res.json()) as { content?: { text?: string }[] };
+    return data.content?.[0]?.text ?? "";
+  }
+  const m = model || DEFAULT_MODELS.google;
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${apiKey}`;
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ contents: [{ parts: [{ text: `${system}\n\n${user}` }] }] })
+  });
+  if (!res.ok) throw await providerError(res);
+  const data = (await res.json()) as {
+    candidates?: { content?: { parts?: { text?: string }[] } }[];
+  };
+  return data.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
 }

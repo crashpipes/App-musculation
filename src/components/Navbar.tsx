@@ -17,6 +17,8 @@ export function Navbar() {
     { href: "/dashboard", label: t("Tableau de bord", "Dashboard") },
     { href: "/tracking", label: t("Suivi", "Tracking") },
     { href: "/exercises", label: t("Exercices", "Exercises") },
+    { href: "/routines", label: t("Programmes", "Routines") },
+    { href: "/badges", label: t("Badges", "Badges") },
     { href: "/profile", label: t("Profil", "Profile") },
     { href: "/settings", label: t("Réglages", "Settings") }
   ];
