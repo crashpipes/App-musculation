@@ -3,30 +3,22 @@ import { handleApiError } from "@/lib/api";
 import { requireUserId } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
-// Termine la séance en cours. Si elle est vide, on la supprime.
+// Termine TOUTES les séances ouvertes de l'utilisateur :
+// - supprime celles qui sont vides (aucune série) ;
+// - clôture les autres (endedAt = maintenant) sans toucher aux données.
+// Cela règle aussi le cas des anciennes séances restées "ouvertes".
 export async function POST() {
   try {
     const userId = await requireUserId();
-    const active = await prisma.workoutSession.findFirst({
-      where: {
-        userId,
-        endedAt: null,
-        date: { gte: new Date(Date.now() - 12 * 60 * 60 * 1000) }
-      },
-      orderBy: { date: "desc" }
+
+    await prisma.workoutSession.deleteMany({
+      where: { userId, endedAt: null, sets: { none: {} } }
     });
-    if (!active) return NextResponse.json({ ok: true });
-
-    const setCount = await prisma.workoutSet.count({ where: { sessionId: active.id } });
-    if (setCount === 0) {
-      await prisma.workoutSession.delete({ where: { id: active.id } });
-      return NextResponse.json({ ok: true, deleted: true });
-    }
-
-    await prisma.workoutSession.update({
-      where: { id: active.id },
+    await prisma.workoutSession.updateMany({
+      where: { userId, endedAt: null },
       data: { endedAt: new Date() }
     });
+
     return NextResponse.json({ ok: true });
   } catch (error) {
     return handleApiError(error);
