@@ -2,10 +2,10 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { haptic } from "@/lib/haptics";
 import { useI18n } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
-// Barre de navigation inférieure, affichée uniquement sur mobile (façon app native).
 export function BottomNav() {
   const pathname = usePathname();
   const { t } = useI18n();
@@ -26,6 +26,7 @@ export function BottomNav() {
           <Link
             key={it.href}
             href={it.href}
+            onClick={() => haptic()}
             className={cn(
               "flex flex-1 flex-col items-center gap-0.5 py-2 text-[11px] font-medium transition active:scale-95",
               active ? "text-brand-600" : "text-[rgb(var(--muted))]"

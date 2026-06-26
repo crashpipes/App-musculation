@@ -7,6 +7,7 @@ import { AIEstimator } from "@/components/AIEstimator";
 import { LineProgressChart } from "@/components/charts/LineProgressChart";
 import { ProgressRing } from "@/components/ProgressRing";
 import { apiGet, apiSend } from "@/lib/fetcher";
+import { haptic } from "@/lib/haptics";
 import { useI18n } from "@/lib/i18n";
 import type { DailyLog, Meal, WeightEntry } from "@prisma/client";
 import type { ProfileResponse } from "@/types";
@@ -60,6 +61,7 @@ export default function TrackingPage() {
     e.preventDefault();
     if (!calories && !proteinG) return;
     setMsg(null);
+    haptic();
     await apiSend("/api/meals", "POST", {
       day: localDay(),
       label: label || undefined,
@@ -80,6 +82,7 @@ export default function TrackingPage() {
 
   async function addWater(amount: number) {
     if (amount <= 0) return;
+    haptic();
     await apiSend("/api/water", "POST", { day: localDay(), amountMl: amount });
     setWaterAmount("");
     load();
@@ -88,6 +91,7 @@ export default function TrackingPage() {
   async function saveWeight(e: React.FormEvent) {
     e.preventDefault();
     if (!weightKg) return;
+    haptic();
     await apiSend("/api/weight", "POST", { weightKg: Number(weightKg) });
     setWeightKg("");
     setMsg(t("Poids enregistré ✓", "Weight saved ✓"));

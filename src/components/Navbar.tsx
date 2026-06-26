@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
+import { haptic } from "@/lib/haptics";
 import { useI18n } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import { LanguageToggle } from "./LanguageToggle";
@@ -19,6 +20,11 @@ export function Navbar() {
     { href: "/profile", label: t("Profil", "Profile") },
     { href: "/settings", label: t("Réglages", "Settings") }
   ];
+
+  function logout() {
+    haptic();
+    signOut({ callbackUrl: "/login" });
+  }
 
   return (
     <header className="pt-safe sticky top-0 z-40 border-b border-[rgb(var(--border))] bg-[rgb(var(--background))]/80 backdrop-blur">
@@ -47,18 +53,30 @@ export function Navbar() {
         <div className="flex items-center gap-2">
           <LanguageToggle />
           <ThemeToggle />
-          <button
-            onClick={() => signOut({ callbackUrl: "/login" })}
-            className="btn-ghost hidden sm:inline-flex"
-          >
+          {/* Desktop : bouton texte */}
+          <button onClick={logout} className="btn-ghost hidden sm:inline-flex">
             {t("Déconnexion", "Sign out")}
           </button>
+          {/* Mobile : icône "log out" claire + libellé court */}
           <button
-            onClick={() => signOut({ callbackUrl: "/login" })}
+            onClick={logout}
             aria-label={t("Déconnexion", "Sign out")}
-            className="btn-ghost h-9 w-9 !px-0 sm:hidden"
+            className="btn-ghost flex items-center gap-1.5 !px-2.5 text-red-500 sm:hidden"
           >
-            ⏻
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={2}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="h-4 w-4"
+            >
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+              <polyline points="16 17 21 12 16 7" />
+              <line x1="21" y1="12" x2="9" y2="12" />
+            </svg>
+            <span className="text-xs font-medium">{t("Quitter", "Log out")}</span>
           </button>
         </div>
       </div>

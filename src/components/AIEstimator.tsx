@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { apiSend } from "@/lib/fetcher";
+import { haptic } from "@/lib/haptics";
 import { useI18n } from "@/lib/i18n";
 import type { EstimateResult, FoodItem } from "@/lib/ai";
 
@@ -125,6 +126,7 @@ export function AIEstimator({
 
   async function addToDay() {
     if (!result) return;
+    haptic();
     await apiSend("/api/meals", "POST", {
       day,
       label: result.label,

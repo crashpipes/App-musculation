@@ -8,6 +8,7 @@ import { useEffect, useMemo, useState } from "react";
 import { LineProgressChart } from "@/components/charts/LineProgressChart";
 import { StatCard } from "@/components/StatCard";
 import { apiGet, apiSend } from "@/lib/fetcher";
+import { haptic } from "@/lib/haptics";
 import { exName, muscleName } from "@/lib/exercise-i18n";
 import { useI18n } from "@/lib/i18n";
 import type { Exercise, WorkoutSet } from "@prisma/client";
@@ -45,6 +46,7 @@ export default function ExerciseDetailPage() {
 
   async function addEntry(e: React.FormEvent) {
     e.preventDefault();
+    haptic();
     await apiSend("/api/sets", "POST", {
       exerciseId: params.id,
       sets: Number(sets || 1),

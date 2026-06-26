@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { BottomNav } from "@/components/BottomNav";
 import { Navbar } from "@/components/Navbar";
+import { QuickAddButton } from "@/components/QuickAddButton";
 import { getCurrentUser } from "@/lib/auth";
 
 export default async function AppLayout({
@@ -15,6 +16,7 @@ export default async function AppLayout({
     <div className="min-h-screen">
       <Navbar />
       <main className="mx-auto max-w-6xl px-4 py-6 pb-24 sm:pb-6">{children}</main>
+      <QuickAddButton />
       <BottomNav />
     </div>
   );
