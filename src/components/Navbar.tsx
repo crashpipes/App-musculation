@@ -21,7 +21,7 @@ export function Navbar() {
   ];
 
   return (
-    <header className="sticky top-0 z-40 border-b border-[rgb(var(--border))] bg-[rgb(var(--background))]/80 backdrop-blur">
+    <header className="pt-safe sticky top-0 z-40 border-b border-[rgb(var(--border))] bg-[rgb(var(--background))]/80 backdrop-blur">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
         <Link href="/dashboard" className="text-lg font-extrabold">
           💪 <span className="text-brand-600">MuscuTrack</span>
@@ -49,29 +49,19 @@ export function Navbar() {
           <ThemeToggle />
           <button
             onClick={() => signOut({ callbackUrl: "/login" })}
-            className="btn-ghost"
+            className="btn-ghost hidden sm:inline-flex"
           >
             {t("Déconnexion", "Sign out")}
           </button>
+          <button
+            onClick={() => signOut({ callbackUrl: "/login" })}
+            aria-label={t("Déconnexion", "Sign out")}
+            className="btn-ghost h-9 w-9 !px-0 sm:hidden"
+          >
+            ⏻
+          </button>
         </div>
       </div>
-
-      <nav className="flex gap-1 overflow-x-auto px-4 pb-2 sm:hidden">
-        {links.map((l) => (
-          <Link
-            key={l.href}
-            href={l.href}
-            className={cn(
-              "whitespace-nowrap rounded-lg px-3 py-1.5 text-sm font-medium",
-              pathname.startsWith(l.href)
-                ? "bg-brand-600 text-white"
-                : "border border-[rgb(var(--border))]"
-            )}
-          >
-            {l.label}
-          </Link>
-        ))}
-      </nav>
     </header>
   );
 }

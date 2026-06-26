@@ -55,3 +55,11 @@ select.input option {
   background-color: rgb(var(--card));
   color: rgb(var(--foreground));
 }
+
+/* Zones sûres (encoches / barres système) pour la PWA mobile */
+.pb-safe {
+  padding-bottom: calc(env(safe-area-inset-bottom) + 0.35rem);
+}
+.pt-safe {
+  padding-top: env(safe-area-inset-top);
+}
