@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { ActiveWorkoutBar } from "@/components/ActiveWorkoutBar";
+import { OfflineBanner } from "@/components/OfflineBanner";
 import { BottomNav } from "@/components/BottomNav";
 import { Navbar } from "@/components/Navbar";
 import { QuickAddButton } from "@/components/QuickAddButton";
@@ -16,6 +17,7 @@ export default async function AppLayout({
   return (
     <div className="min-h-screen">
       <Navbar />
+      <OfflineBanner />
       <ActiveWorkoutBar />
       <main className="mx-auto max-w-6xl px-4 py-6 pb-24 sm:pb-6">{children}</main>
       <QuickAddButton />

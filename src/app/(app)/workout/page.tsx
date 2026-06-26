@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { apiGet, apiSend } from "@/lib/fetcher";
+import { apiGet } from "@/lib/fetcher";
 import { exName } from "@/lib/exercise-i18n";
 import { haptic } from "@/lib/haptics";
 import { useI18n } from "@/lib/i18n";
@@ -11,7 +11,7 @@ import type { Exercise } from "@prisma/client";
 
 export default function WorkoutPage() {
   const { t, locale } = useI18n();
-  const { active, loading, start, finish, refresh } = useWorkout();
+  const { active, loading, start, finish, addSet } = useWorkout();
   const [all, setAll] = useState<Exercise[]>([]);
   const [selId, setSelId] = useState("");
   const [sets, setSets] = useState("3");
@@ -33,21 +33,24 @@ export default function WorkoutPage() {
     return () => clearInterval(id);
   }, [active]);
 
-  async function addSet(e: React.FormEvent) {
+  async function onAddSet(e: React.FormEvent) {
     e.preventDefault();
-    if (!selId || !reps || !weight) return;
+    const ex = all.find((x) => x.id === selId);
+    if (!ex || !reps || !weight) return;
     setError(null);
     haptic();
     try {
-      await apiSend("/api/sets", "POST", {
-        exerciseId: selId,
-        sets: Number(sets || 1),
-        reps: Number(reps || 0),
-        weightKg: Number(weight || 0)
-      });
+      await addSet(
+        {
+          exerciseId: selId,
+          sets: Number(sets || 1),
+          reps: Number(reps || 0),
+          weightKg: Number(weight || 0)
+        },
+        ex
+      );
       setReps("");
       setWeight("");
-      await refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : t("Erreur", "Error"));
     }
@@ -83,23 +86,18 @@ export default function WorkoutPage() {
 
   return (
     <div className="space-y-6">
-      {/* Minuteur */}
       <div className="card text-center">
         <p className="text-sm text-[rgb(var(--muted))]">{t("Séance en cours", "Workout in progress")}</p>
         <p className="my-1 font-mono text-5xl font-bold tabular-nums">{formatElapsed(elapsed)}</p>
         <p className="text-sm text-[rgb(var(--muted))]">
           {active.sets.length} {t("séries", "sets")} · {totalVolume} kg {t("de volume", "volume")}
         </p>
-        <button
-          onClick={() => { haptic(); finish(); }}
-          className="btn-primary mt-3 w-full"
-        >
+        <button onClick={() => { haptic(); finish(); }} className="btn-primary mt-3 w-full">
           {t("Terminer la séance", "Finish workout")}
         </button>
       </div>
 
-      {/* Ajouter un exercice */}
-      <form onSubmit={addSet} className="card space-y-4">
+      <form onSubmit={onAddSet} className="card space-y-4">
         <h2 className="font-semibold">{t("Ajouter un exercice", "Add an exercise")}</h2>
         <div>
           <label className="label">{t("Exercice", "Exercise")}</label>
@@ -116,9 +114,7 @@ export default function WorkoutPage() {
           <Num label={t("Charge (kg)", "Weight (kg)")} value={weight} onChange={setWeight} step="0.5" />
         </div>
         {error && <p className="text-sm text-red-500">{error}</p>}
-        <button type="submit" disabled={!selId} className="btn-primary">
-          {t("Ajouter", "Add")}
-        </button>
+        <button type="submit" disabled={!selId} className="btn-primary">{t("Ajouter", "Add")}</button>
         <p className="text-center text-xs text-[rgb(var(--muted))]">
           <Link href="/exercises" className="text-brand-600 hover:underline">
             {t("Voir la bibliothèque d'exercices", "Browse exercise library")}
@@ -126,21 +122,16 @@ export default function WorkoutPage() {
         </p>
       </form>
 
-      {/* Exercices de la séance */}
       <div className="card">
         <h2 className="mb-3 font-semibold">{t("Cette séance", "This workout")}</h2>
         {active.sets.length === 0 ? (
-          <p className="text-sm text-[rgb(var(--muted))]">
-            {t("Aucun exercice pour l'instant.", "No exercises yet.")}
-          </p>
+          <p className="text-sm text-[rgb(var(--muted))]">{t("Aucun exercice pour l'instant.", "No exercises yet.")}</p>
         ) : (
           <ul className="divide-y divide-[rgb(var(--border))]">
             {active.sets.map((s) => (
               <li key={s.id} className="flex items-center justify-between py-2 text-sm">
                 <span className="font-medium">{exName(s.exercise.name, locale)}</span>
-                <span className="text-[rgb(var(--muted))]">
-                  {s.sets} × {s.reps} @ {s.weightKg} kg
-                </span>
+                <span className="text-[rgb(var(--muted))]">{s.sets} × {s.reps} @ {s.weightKg} kg</span>
               </li>
             ))}
           </ul>

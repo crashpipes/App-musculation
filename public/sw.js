@@ -1,11 +1,14 @@
-// Service worker minimal et prudent : ne touche JAMAIS aux requêtes /api
-// (auth, données) — il ne fait que mettre en cache les ressources statiques.
-const CACHE = "muscutrack-v1";
-const ASSETS = ["/icons/icon-192.png", "/icons/icon-512.png"];
+// Service worker : met en cache l'app shell pour un usage hors-ligne,
+// sans jamais toucher aux requêtes /api (auth, données).
+const CACHE = "muscutrack-v2";
+const ASSETS = ["/dashboard", "/workout", "/tracking", "/icons/icon-192.png", "/icons/icon-512.png"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
-    caches.open(CACHE).then((c) => c.addAll(ASSETS)).then(() => self.skipWaiting())
+    caches
+      .open(CACHE)
+      .then((c) => c.addAll(ASSETS).catch(() => undefined))
+      .then(() => self.skipWaiting())
   );
 });
 
@@ -22,9 +25,23 @@ self.addEventListener("fetch", (event) => {
   const req = event.request;
   const url = new URL(req.url);
   if (req.method !== "GET" || url.origin !== location.origin) return;
-  if (url.pathname.startsWith("/api")) return; // ne jamais mettre l'API en cache
+  if (url.pathname.startsWith("/api")) return; // jamais l'API en cache
 
-  // Network-first : on privilégie toujours la version à jour, cache en secours hors-ligne.
+  // Navigations (ouverture de pages) : réseau d'abord, cache en secours hors-ligne.
+  if (req.mode === "navigate") {
+    event.respondWith(
+      fetch(req)
+        .then((res) => {
+          const copy = res.clone();
+          caches.open(CACHE).then((c) => c.put(req, copy));
+          return res;
+        })
+        .catch(() => caches.match(req).then((r) => r || caches.match("/dashboard")))
+    );
+    return;
+  }
+
+  // Ressources statiques : réseau d'abord, cache en secours.
   event.respondWith(
     fetch(req)
       .then((res) => {

@@ -26,7 +26,7 @@ export default function ExerciseDetailPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
   const { t, locale } = useI18n();
-  const { active, start, refresh } = useWorkout();
+  const { active, start, addSet } = useWorkout();
   const dl = locale === "en" ? enUS : fr;
   const [data, setData] = useState<DetailResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -50,21 +50,24 @@ export default function ExerciseDetailPage() {
 
   async function addEntry(e: React.FormEvent) {
     e.preventDefault();
+    if (!data) return;
     setError(null);
     haptic();
     try {
-      await apiSend("/api/sets", "POST", {
-        exerciseId: params.id,
-        sets: Number(sets || 1),
-        reps: Number(reps || 0),
-        weightKg: Number(weight || 0),
-        notes: notes || undefined
-      });
+      await addSet(
+        {
+          exerciseId: params.id,
+          sets: Number(sets || 1),
+          reps: Number(reps || 0),
+          weightKg: Number(weight || 0),
+          notes: notes || undefined
+        },
+        data.exercise
+      );
       setReps("");
       setWeight("");
       setNotes("");
       await load();
-      await refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : t("Erreur", "Error"));
     }
