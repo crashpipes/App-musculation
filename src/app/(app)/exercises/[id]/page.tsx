@@ -8,6 +8,7 @@ import { useEffect, useMemo, useState } from "react";
 import { LineProgressChart } from "@/components/charts/LineProgressChart";
 import { StatCard } from "@/components/StatCard";
 import { apiGet, apiSend } from "@/lib/fetcher";
+import { exName, muscleName } from "@/lib/exercise-i18n";
 import { useI18n } from "@/lib/i18n";
 import type { Exercise, WorkoutSet } from "@prisma/client";
 
@@ -93,8 +94,8 @@ export default function ExerciseDetailPage() {
 
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold">{data.exercise.name}</h1>
-          <p className="text-[rgb(var(--muted))]">{data.exercise.muscleGroup}</p>
+          <h1 className="text-2xl font-bold">{exName(data.exercise.name, locale)}</h1>
+          <p className="text-[rgb(var(--muted))]">{muscleName(data.exercise.muscleGroup, locale)}</p>
           {data.exercise.description && (
             <p className="mt-1 max-w-prose text-sm">{data.exercise.description}</p>
           )}

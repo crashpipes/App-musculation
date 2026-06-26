@@ -38,9 +38,19 @@ export async function POST(req: NextRequest) {
         { status: 401 }
       );
     }
-    if (error instanceof Error && error.message.startsWith("AI_PROVIDER")) {
+    if (error instanceof Error && error.message.startsWith("AI_PROVIDER:")) {
+      const rest = error.message.slice("AI_PROVIDER:".length);
+      const sep = rest.indexOf(":");
+      const status = rest.slice(0, sep);
+      const detail = rest.slice(sep + 1);
+      const hint =
+        status === "429"
+          ? " — Quota insuffisant : ce fournisseur nécessite des crédits/facturation actifs."
+          : status === "404"
+            ? " — Modèle introuvable : change de modèle dans les réglages."
+            : "";
       return NextResponse.json(
-        { error: "Le fournisseur d'IA a renvoyé une erreur. Réessaie plus tard." },
+        { error: `Fournisseur (${status}) : ${detail}${hint}` },
         { status: 502 }
       );
     }

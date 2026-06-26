@@ -9,6 +9,7 @@ import { LineProgressChart } from "@/components/charts/LineProgressChart";
 import { ProgressRing } from "@/components/ProgressRing";
 import { StatCard } from "@/components/StatCard";
 import { apiGet } from "@/lib/fetcher";
+import { exName } from "@/lib/exercise-i18n";
 import { useI18n } from "@/lib/i18n";
 import type { DashboardData } from "@/types";
 
@@ -147,7 +148,7 @@ export default function DashboardPage() {
           <ul className="divide-y divide-[rgb(var(--border))]">
             {recentSets.map((s) => (
               <li key={s.id} className="flex items-center justify-between py-2 text-sm">
-                <span className="font-medium">{s.exercise.name}</span>
+                <span className="font-medium">{exName(s.exercise.name, locale)}</span>
                 <span className="text-[rgb(var(--muted))]">
                   {s.sets} × {s.reps} @ {s.weightKg} kg ·{" "}
                   {format(new Date(s.date), "dd/MM", { locale: dl })}

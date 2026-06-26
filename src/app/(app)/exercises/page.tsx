@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { apiGet, apiSend } from "@/lib/fetcher";
+import { exName } from "@/lib/exercise-i18n";
 import { useI18n } from "@/lib/i18n";
 import type { Exercise } from "@prisma/client";
 
@@ -85,7 +86,7 @@ export default function ExercisesPage() {
             {items.map((ex) => (
               <Link key={ex.id} href={`/exercises/${ex.id}`} className="card transition hover:border-brand-500">
                 <div className="flex items-center justify-between">
-                  <span className="font-semibold">{ex.name}</span>
+                  <span className="font-semibold">{exName(ex.name, locale)}</span>
                   {!ex.isPreset && (
                     <span className="rounded-full bg-brand-100 px-2 py-0.5 text-xs text-brand-700 dark:bg-brand-900/40 dark:text-brand-200">
                       {t("perso", "custom")}

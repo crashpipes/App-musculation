@@ -12,7 +12,7 @@ export const AI_PROVIDERS: { id: AiProvider; label: string; keyUrl: string }[] =
 export const DEFAULT_MODELS: Record<AiProvider, string> = {
   openai: "gpt-4o-mini",
   anthropic: "claude-3-5-sonnet-latest",
-  google: "gemini-1.5-flash"
+  google: "gemini-2.5-flash"
 };
 
 export interface FoodItem {
@@ -32,7 +32,7 @@ export interface EstimateInput {
   apiKey: string;
   model?: string | null;
   mode: "photo" | "foods";
-  imageBase64?: string; // sans le préfixe data:
+  imageBase64?: string;
   mimeType?: string;
   foods?: FoodItem[];
 }
@@ -44,9 +44,7 @@ const SYSTEM_INSTRUCTION =
 
 function buildUserText(input: EstimateInput): string {
   if (input.mode === "foods" && input.foods?.length) {
-    const list = input.foods
-      .map((f) => `${f.grams} g de ${f.name}`)
-      .join(", ");
+    const list = input.foods.map((f) => `${f.grams} g de ${f.name}`).join(", ");
     return `Plat composé de : ${list}. Estime les calories et protéines totales.`;
   }
   return "Estime les calories et protéines totales du plat sur la photo.";
@@ -54,7 +52,6 @@ function buildUserText(input: EstimateInput): string {
 
 function parseResult(raw: string): EstimateResult {
   let text = raw.trim();
-  // Retire d'éventuelles barrières de code Markdown
   text = text.replace(/```json/gi, "").replace(/```/g, "").trim();
   const start = text.indexOf("{");
   const end = text.lastIndexOf("}");
@@ -68,6 +65,22 @@ function parseResult(raw: string): EstimateResult {
   };
 }
 
+async function providerError(res: Response): Promise<Error> {
+  let message = `HTTP ${res.status}`;
+  try {
+    const j = (await res.json()) as { error?: { message?: string }; message?: string };
+    message = j?.error?.message ?? j?.message ?? JSON.stringify(j);
+  } catch {
+    try {
+      message = await res.text();
+    } catch {
+      // ignore
+    }
+  }
+  if (res.status === 401 || res.status === 403) return new Error("AI_AUTH");
+  return new Error(`AI_PROVIDER:${res.status}:${String(message).slice(0, 300)}`);
+}
+
 async function callOpenAI(input: EstimateInput, text: string): Promise<string> {
   const content: unknown[] = [{ type: "text", text }];
   if (input.mode === "photo" && input.imageBase64) {
@@ -78,10 +91,7 @@ async function callOpenAI(input: EstimateInput, text: string): Promise<string> {
   }
   const res = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${input.apiKey}`
-    },
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${input.apiKey}` },
     body: JSON.stringify({
       model: input.model || DEFAULT_MODELS.openai,
       messages: [
@@ -92,9 +102,7 @@ async function callOpenAI(input: EstimateInput, text: string): Promise<string> {
     })
   });
   if (!res.ok) throw await providerError(res);
-  const data = (await res.json()) as {
-    choices?: { message?: { content?: string } }[];
-  };
+  const data = (await res.json()) as { choices?: { message?: { content?: string } }[] };
   return data.choices?.[0]?.message?.content ?? "";
 }
 
@@ -103,11 +111,7 @@ async function callAnthropic(input: EstimateInput, text: string): Promise<string
   if (input.mode === "photo" && input.imageBase64) {
     content.unshift({
       type: "image",
-      source: {
-        type: "base64",
-        media_type: input.mimeType ?? "image/jpeg",
-        data: input.imageBase64
-      }
+      source: { type: "base64", media_type: input.mimeType ?? "image/jpeg", data: input.imageBase64 }
     });
   }
   const res = await fetch("https://api.anthropic.com/v1/messages", {
@@ -132,9 +136,7 @@ async function callAnthropic(input: EstimateInput, text: string): Promise<string
 async function callGoogle(input: EstimateInput, text: string): Promise<string> {
   const parts: unknown[] = [{ text: `${SYSTEM_INSTRUCTION}\n\n${text}` }];
   if (input.mode === "photo" && input.imageBase64) {
-    parts.push({
-      inline_data: { mime_type: input.mimeType ?? "image/jpeg", data: input.imageBase64 }
-    });
+    parts.push({ inline_data: { mime_type: input.mimeType ?? "image/jpeg", data: input.imageBase64 } });
   }
   const model = input.model || DEFAULT_MODELS.google;
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${input.apiKey}`;
@@ -148,19 +150,6 @@ async function callGoogle(input: EstimateInput, text: string): Promise<string> {
     candidates?: { content?: { parts?: { text?: string }[] } }[];
   };
   return data.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
-}
-
-async function providerError(res: Response): Promise<Error> {
-  let detail = "";
-  try {
-    detail = JSON.stringify(await res.json());
-  } catch {
-    detail = await res.text().catch(() => "");
-  }
-  if (res.status === 401 || res.status === 403) {
-    return new Error("AI_AUTH");
-  }
-  return new Error(`AI_PROVIDER:${res.status}:${detail.slice(0, 200)}`);
 }
 
 export async function estimateNutrition(input: EstimateInput): Promise<EstimateResult> {
