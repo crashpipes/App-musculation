@@ -3,6 +3,7 @@
 import { format, subDays } from "date-fns";
 import { fr } from "date-fns/locale";
 import { useEffect, useMemo, useState } from "react";
+import { AIEstimator } from "@/components/AIEstimator";
 import { LineProgressChart } from "@/components/charts/LineProgressChart";
 import { ProgressRing } from "@/components/ProgressRing";
 import { apiGet, apiSend } from "@/lib/fetcher";
@@ -115,7 +116,6 @@ export default function TrackingPage() {
     <div className="space-y-6">
       <h1 className="text-2xl font-bold">Suivi quotidien</h1>
 
-      {/* Totaux du jour */}
       {targets && (
         <div className="card">
           <h2 className="mb-4 font-semibold">Aujourd&apos;hui</h2>
@@ -146,7 +146,6 @@ export default function TrackingPage() {
       )}
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        {/* Ajout d'un repas */}
         <form onSubmit={addMeal} className="card space-y-4 lg:col-span-2">
           <h2 className="font-semibold">Ajouter un repas</h2>
           <p className="text-sm text-[rgb(var(--muted))]">
@@ -168,7 +167,6 @@ export default function TrackingPage() {
           <button type="submit" className="btn-primary">Ajouter le repas</button>
         </form>
 
-        {/* Ajout d'eau */}
         <div className="card space-y-4">
           <h2 className="font-semibold">Ajouter de l&apos;eau</h2>
           <div className="flex flex-wrap gap-2">
@@ -203,7 +201,8 @@ export default function TrackingPage() {
         </div>
       </div>
 
-      {/* Repas du jour */}
+      <AIEstimator day={localDay()} onAdded={load} />
+
       <div className="card">
         <h2 className="mb-3 font-semibold">Repas d&apos;aujourd&apos;hui</h2>
         {meals.length === 0 ? (
@@ -228,7 +227,6 @@ export default function TrackingPage() {
         )}
       </div>
 
-      {/* Poids du jour */}
       <form onSubmit={saveWeight} className="card space-y-4">
         <h2 className="font-semibold">Poids du jour</h2>
         <div className="flex gap-2">

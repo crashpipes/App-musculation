@@ -13,17 +13,17 @@ enum Sex {
 }
 
 enum Goal {
-  BULK // prise de masse
-  MAINTAIN // maintien
-  CUT // sèche
+  BULK
+  MAINTAIN
+  CUT
 }
 
 enum ActivityLevel {
-  SEDENTARY // 1.2
-  LIGHT // 1.375
-  MODERATE // 1.55
-  ACTIVE // 1.725
-  VERY_ACTIVE // 1.9
+  SEDENTARY
+  LIGHT
+  MODERATE
+  ACTIVE
+  VERY_ACTIVE
 }
 
 model User {
@@ -41,6 +41,7 @@ model User {
   exercises      Exercise[]
   sessions       WorkoutSession[]
   resetTokens    PasswordResetToken[]
+  aiSetting      AISetting?
 }
 
 model Profile {
@@ -68,8 +69,6 @@ model WeightEntry {
   @@index([userId, date])
 }
 
-// Cumul nutrition + eau, un enregistrement par jour et par utilisateur.
-// Incrémenté à chaque repas / ajout d'eau de la journée.
 model DailyLog {
   id           String   @id @default(cuid())
   userId       String
@@ -85,7 +84,6 @@ model DailyLog {
   @@index([userId, date])
 }
 
-// Un repas saisi dans la journée (s'additionne au DailyLog du jour).
 model Meal {
   id        String   @id @default(cuid())
   userId    String
@@ -105,7 +103,6 @@ model Exercise {
   muscleGroup   String
   description   String?
   isPreset      Boolean          @default(false)
-  // null pour les exercices préchargés partagés ; sinon propriétaire
   userId        String?
   user          User?            @relation(fields: [userId], references: [id], onDelete: Cascade)
   sets          WorkoutSet[]
@@ -127,7 +124,6 @@ model WorkoutSession {
   @@index([userId, date])
 }
 
-// Une performance saisie en une fois : `sets` séries de `reps` répétitions à `weightKg`.
 model WorkoutSet {
   id         String          @id @default(cuid())
   sessionId  String
@@ -153,4 +149,15 @@ model PasswordResetToken {
   createdAt DateTime @default(now())
 
   @@index([userId])
+}
+
+model AISetting {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  provider  String
+  apiKeyEnc String
+  model     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

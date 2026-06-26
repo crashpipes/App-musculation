@@ -29,13 +29,7 @@ export const profileSchema = z.object({
   heightCm: z.coerce.number().min(80).max(260),
   currentWeight: z.coerce.number().min(25).max(400),
   goal: z.enum(["BULK", "MAINTAIN", "CUT"]),
-  activity: z.enum([
-    "SEDENTARY",
-    "LIGHT",
-    "MODERATE",
-    "ACTIVE",
-    "VERY_ACTIVE"
-  ])
+  activity: z.enum(["SEDENTARY", "LIGHT", "MODERATE", "ACTIVE", "VERY_ACTIVE"])
 });
 
 // Un repas qui s'ajoute au total de la journée. `day` = jour local (YYYY-MM-DD).
@@ -74,6 +68,36 @@ export const workoutSetSchema = z.object({
   notes: z.string().trim().max(500).optional().or(z.literal(""))
 });
 
+export const aiSettingsSchema = z.object({
+  provider: z.enum(["openai", "anthropic", "google"]),
+  apiKey: z.string().trim().min(10, "Clé trop courte").max(300),
+  model: z.string().trim().max(100).optional().or(z.literal(""))
+});
+
+export const aiEstimateSchema = z
+  .object({
+    mode: z.enum(["photo", "foods"]),
+    imageBase64: z.string().max(12_000_000).optional(),
+    mimeType: z.string().max(60).optional(),
+    foods: z
+      .array(
+        z.object({
+          name: z.string().trim().min(1).max(80),
+          grams: z.coerce.number().min(1).max(5000)
+        })
+      )
+      .max(30)
+      .optional()
+  })
+  .refine(
+    (d) =>
+      (d.mode === "photo" && !!d.imageBase64) ||
+      (d.mode === "foods" && !!d.foods && d.foods.length > 0),
+    "Données insuffisantes pour l'estimation"
+  );
+
+export type AiSettingsInput = z.infer<typeof aiSettingsSchema>;
+export type AiEstimateInput = z.infer<typeof aiEstimateSchema>;
 export type RegisterInput = z.infer<typeof registerSchema>;
 export type ProfileInput = z.infer<typeof profileSchema>;
 export type MealInput = z.infer<typeof mealSchema>;

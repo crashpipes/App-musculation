@@ -10,7 +10,8 @@ const LINKS = [
   { href: "/dashboard", label: "Tableau de bord" },
   { href: "/tracking", label: "Suivi" },
   { href: "/exercises", label: "Exercices" },
-  { href: "/profile", label: "Profil" }
+  { href: "/profile", label: "Profil" },
+  { href: "/settings", label: "Réglages" }
 ];
 
 export function Navbar() {
@@ -51,7 +52,6 @@ export function Navbar() {
         </div>
       </div>
 
-      {/* Navigation mobile */}
       <nav className="flex gap-1 overflow-x-auto px-4 pb-2 sm:hidden">
         {LINKS.map((l) => (
           <Link
