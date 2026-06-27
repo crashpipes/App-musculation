@@ -4,20 +4,22 @@
 
 :root {
   color-scheme: light;
-  --background: 250 250 251;
-  --foreground: 17 24 39;
+  --background: 243 243 243; /* gris clair */
+  --foreground: 10 10 10; /* noir */
   --card: 255 255 255;
-  --border: 229 231 235;
-  --muted: 107 114 128;
+  --border: 10 10 10; /* bordures noires = look athletique */
+  --muted: 107 107 107;
+  --accent: 255 229 0; /* jaune FitnessPark */
 }
 
 .dark {
   color-scheme: dark;
-  --background: 9 9 11;
-  --foreground: 244 244 245;
-  --card: 24 24 27;
-  --border: 39 39 42;
-  --muted: 161 161 170;
+  --background: 10 10 10; /* noir */
+  --foreground: 245 245 245;
+  --card: 22 22 22;
+  --border: 42 42 42;
+  --muted: 138 138 138;
+  --accent: 255 229 0;
 }
 
 body {
@@ -25,24 +27,42 @@ body {
   color: rgb(var(--foreground));
 }
 
+@layer base {
+  /* Titres facon affiche de salle : Oswald condense, majuscules */
+  h1,
+  h2,
+  h3 {
+    @apply font-display uppercase tracking-tight;
+  }
+}
+
 @layer components {
   .card {
-    @apply rounded-2xl border bg-[rgb(var(--card))] border-[rgb(var(--border))] p-5 shadow-sm;
+    @apply rounded-xl border-2 bg-[rgb(var(--card))] border-[rgb(var(--border))] p-5;
+  }
+  /* Variante carte avec liseré jaune (stats) */
+  .card-accent {
+    @apply card border-l-[7px] border-l-[rgb(var(--accent))];
   }
   .input {
-    @apply w-full rounded-lg border border-[rgb(var(--border))] bg-transparent px-3 py-2 text-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20;
+    @apply w-full rounded-md border-2 border-[rgb(var(--border))] bg-transparent px-3 py-2 text-sm outline-none focus:border-[rgb(var(--accent))] focus:ring-2 focus:ring-[rgb(var(--accent))]/40;
   }
   .label {
-    @apply mb-1 block text-sm font-medium;
+    @apply mb-1 block font-display text-xs font-medium uppercase tracking-wide;
   }
   .btn {
-    @apply inline-flex items-center justify-center rounded-lg px-4 py-2 text-sm font-semibold transition active:scale-95 disabled:opacity-50;
+    @apply inline-flex items-center justify-center rounded-md px-4 py-2 font-display text-sm font-bold uppercase tracking-wide transition active:scale-95 disabled:opacity-50;
   }
+  /* CTA jaune + texte noir = signature FitnessPark */
   .btn-primary {
-    @apply btn bg-brand-600 text-white hover:bg-brand-700;
+    @apply btn border-2 border-[rgb(var(--border))] bg-[rgb(var(--accent))] text-ink hover:shadow-hard;
   }
   .btn-ghost {
-    @apply btn border border-[rgb(var(--border))] hover:bg-[rgb(var(--border))]/40;
+    @apply btn border-2 border-[rgb(var(--border))] bg-transparent hover:bg-[rgb(var(--accent))] hover:text-ink;
+  }
+  /* Badge / pastille jaune */
+  .chip-accent {
+    @apply inline-flex items-center gap-1 rounded-full border-2 border-[rgb(var(--border))] bg-[rgb(var(--accent))] px-3 py-1 font-display text-xs font-bold uppercase tracking-wide text-ink;
   }
 }
 

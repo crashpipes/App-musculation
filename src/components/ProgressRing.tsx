@@ -13,7 +13,7 @@ export function ProgressRing({
   target,
   label,
   unit = "",
-  color = "#4f46e5"
+  color = "#0a0a0a" // anneau noir par défaut (look FitnessPark)
 }: Props) {
   const pct = target > 0 ? clamp((value / target) * 100, 0, 100) : 0;
   const r = 42;
@@ -29,15 +29,15 @@ export function ProgressRing({
             cy="50"
             r={r}
             fill="none"
-            strokeWidth="8"
-            className="stroke-[rgb(var(--border))]"
+            strokeWidth="9"
+            className="stroke-[rgb(var(--border))]/15"
           />
           <circle
             cx="50"
             cy="50"
             r={r}
             fill="none"
-            strokeWidth="8"
+            strokeWidth="9"
             stroke={color}
             strokeLinecap="round"
             strokeDasharray={c}
@@ -46,11 +46,18 @@ export function ProgressRing({
           />
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span className="text-xl font-bold">{Math.round(value)}</span>
-          <span className="text-xs text-[rgb(var(--muted))]">/ {target}{unit}</span>
+          <span className="font-display text-xl font-bold">
+            {Math.round(value)}
+          </span>
+          <span className="text-xs text-[rgb(var(--muted))]">
+            / {target}
+            {unit}
+          </span>
         </div>
       </div>
-      <span className="text-sm font-medium">{label}</span>
+      <span className="font-display text-sm font-semibold uppercase tracking-wide">
+        {label}
+      </span>
     </div>
   );
 }

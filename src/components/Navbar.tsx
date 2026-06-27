@@ -30,10 +30,14 @@ export function Navbar() {
   }
 
   return (
-    <header className="pt-safe sticky top-0 z-40 border-b border-[rgb(var(--border))] bg-[rgb(var(--background))]/80 backdrop-blur">
+    <header className="pt-safe sticky top-0 z-40 border-b-2 border-[rgb(var(--border))] bg-ink text-white">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
-        <Link href="/dashboard" className="text-lg font-extrabold">
-          💪 <span className="text-brand-600">MuscuTrack</span>
+        <Link
+          href="/dashboard"
+          className="font-display text-lg font-bold uppercase tracking-wide"
+        >
+          MUSCU
+          <span className="bg-[rgb(var(--accent))] px-1.5 text-ink">TRACK</span>
         </Link>
 
         <nav className="hidden gap-1 sm:flex">
@@ -42,10 +46,10 @@ export function Navbar() {
               key={l.href}
               href={l.href}
               className={cn(
-                "rounded-lg px-3 py-2 text-sm font-medium transition",
+                "rounded-md px-3 py-2 font-display text-sm font-medium uppercase tracking-wide transition",
                 pathname.startsWith(l.href)
-                  ? "bg-brand-600 text-white"
-                  : "hover:bg-[rgb(var(--border))]/50"
+                  ? "bg-[rgb(var(--accent))] font-bold text-ink"
+                  : "text-zinc-300 hover:bg-white/10 hover:text-white"
               )}
             >
               {l.label}
@@ -57,14 +61,17 @@ export function Navbar() {
           <LanguageToggle />
           <ThemeToggle />
           {/* Desktop : bouton texte */}
-          <button onClick={logout} className="btn-ghost hidden sm:inline-flex">
+          <button
+            onClick={logout}
+            className="hidden rounded-md border-2 border-white/25 px-3 py-2 font-display text-xs font-semibold uppercase tracking-wide text-zinc-200 transition hover:border-[rgb(var(--accent))] hover:text-[rgb(var(--accent))] sm:inline-flex"
+          >
             {t("Déconnexion", "Sign out")}
           </button>
           {/* Mobile : icône "log out" claire + libellé court */}
           <button
             onClick={logout}
             aria-label={t("Déconnexion", "Sign out")}
-            className="btn-ghost flex items-center gap-1.5 !px-2.5 text-red-500 sm:hidden"
+            className="flex items-center gap-1.5 rounded-md border-2 border-white/25 px-2.5 py-2 text-red-400 sm:hidden"
           >
             <svg
               viewBox="0 0 24 24"
@@ -79,7 +86,9 @@ export function Navbar() {
               <polyline points="16 17 21 12 16 7" />
               <line x1="21" y1="12" x2="9" y2="12" />
             </svg>
-            <span className="text-xs font-medium">{t("Quitter", "Log out")}</span>
+            <span className="font-display text-xs font-semibold uppercase">
+              {t("Quitter", "Log out")}
+            </span>
           </button>
         </div>
       </div>

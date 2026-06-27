@@ -6,21 +6,29 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
+        // FitnessPark — jaune signature
         brand: {
-          50: "#eef2ff",
-          100: "#e0e7ff",
-          200: "#c7d2fe",
-          300: "#a5b4fc",
-          400: "#818cf8",
-          500: "#6366f1",
-          600: "#4f46e5",
-          700: "#4338ca",
-          800: "#3730a3",
-          900: "#312e81"
-        }
+          50: "#fffdf0",
+          100: "#fff9c2",
+          200: "#fff48a",
+          300: "#ffee52",
+          400: "#ffe924",
+          500: "#ffe500", // jaune FitnessPark
+          600: "#e6ce00",
+          700: "#b39f00",
+          800: "#807200",
+          900: "#4d4400"
+        },
+        ink: "#0a0a0a"
       },
       fontFamily: {
-        sans: ["var(--font-inter)", "system-ui", "sans-serif"]
+        sans: ["var(--font-inter)", "system-ui", "sans-serif"],
+        // Titres condensés "muscu" facon affiche de salle de sport
+        display: ["var(--font-oswald)", "var(--font-inter)", "sans-serif"]
+      },
+      boxShadow: {
+        // ombre dure facon affiche athletique
+        hard: "3px 3px 0 #0a0a0a"
       }
     }
   },
