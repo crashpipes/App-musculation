@@ -60,6 +60,14 @@ export async function POST(req: NextRequest) {
       include: { exercise: true }
     });
 
+    // Garde l'exercice dans la liste de la séance (si saisi sans l'avoir ajouté).
+    const count = await prisma.sessionExercise.count({ where: { sessionId: active.id } });
+    await prisma.sessionExercise.upsert({
+      where: { sessionId_exerciseId: { sessionId: active.id, exerciseId: data.exerciseId } },
+      create: { sessionId: active.id, exerciseId: data.exerciseId, order: count },
+      update: {}
+    });
+
     return NextResponse.json({ set }, { status: 201 });
   } catch (error) {
     return handleApiError(error);

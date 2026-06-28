@@ -112,6 +112,7 @@ model Exercise {
   user            User?             @relation(fields: [userId], references: [id], onDelete: Cascade)
   sets            WorkoutSet[]
   routineEntries  RoutineExercise[]
+  sessionEntries  SessionExercise[]
   createdAt       DateTime          @default(now())
 
   @@index([userId])
@@ -119,16 +120,37 @@ model Exercise {
 }
 
 model WorkoutSession {
-  id        String       @id @default(cuid())
+  id        String            @id @default(cuid())
   userId    String
-  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  date      DateTime     @default(now())
+  user      User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date      DateTime          @default(now())
   endedAt   DateTime?
   notes     String?
+  routineId String?
+  routine   Routine?          @relation(fields: [routineId], references: [id], onDelete: SetNull)
   sets      WorkoutSet[]
-  createdAt DateTime     @default(now())
+  exercises SessionExercise[]
+  createdAt DateTime          @default(now())
 
   @@index([userId, date])
+}
+
+// Exercice planifie d'une seance : present dans la liste sans forcement
+// de series enregistrees. Alimente par un programme au demarrage, ou ajoute
+// manuellement pendant la seance ; peut etre retire en cours de seance.
+model SessionExercise {
+  id         String         @id @default(cuid())
+  sessionId  String
+  session    WorkoutSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  exerciseId String
+  exercise   Exercise       @relation(fields: [exerciseId], references: [id], onDelete: Cascade)
+  order      Int            @default(0)
+  targetSets Int?
+  targetReps Int?
+  createdAt  DateTime       @default(now())
+
+  @@unique([sessionId, exerciseId])
+  @@index([sessionId])
 }
 
 model WorkoutSet {
@@ -153,6 +175,7 @@ model Routine {
   name      String
   createdAt DateTime          @default(now())
   exercises RoutineExercise[]
+  sessions  WorkoutSession[]
 
   @@index([userId])
 }

@@ -56,6 +56,20 @@ export const routineSchema = z.object({
     .max(30)
 });
 
+// Démarrage d'une séance, éventuellement à partir d'un programme.
+export const startWorkoutSchema = z
+  .object({
+    routineId: z.string().cuid().optional()
+  })
+  .optional();
+
+// Ajout d'un exercice à la séance en cours.
+export const sessionExerciseSchema = z.object({
+  exerciseId: z.string().cuid(),
+  targetSets: z.coerce.number().int().min(1).max(20).optional(),
+  targetReps: z.coerce.number().int().min(1).max(100).optional()
+});
+
 // Ajout d'eau qui s'additionne sur la journée.
 export const waterSchema = z.object({
   day: z.coerce.date().optional(),
@@ -120,4 +134,5 @@ export type MealInput = z.infer<typeof mealSchema>;
 export type RoutineInput = z.infer<typeof routineSchema>;
 export type WaterInput = z.infer<typeof waterSchema>;
 export type WorkoutSetInput = z.infer<typeof workoutSetSchema>;
+export type SessionExerciseInput = z.infer<typeof sessionExerciseSchema>;
 export type ExerciseInput = z.infer<typeof exerciseSchema>;

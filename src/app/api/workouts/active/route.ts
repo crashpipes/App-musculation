@@ -3,7 +3,7 @@ import { handleApiError } from "@/lib/api";
 import { requireUserId } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
-// Renvoie la séance en cours (non terminée), avec ses séries, ou null.
+// Renvoie la séance en cours (non terminée), avec ses séries et exercices, ou null.
 export async function GET() {
   try {
     const userId = await requireUserId();
@@ -15,7 +15,8 @@ export async function GET() {
       },
       orderBy: { date: "desc" },
       include: {
-        sets: { orderBy: { date: "asc" }, include: { exercise: true } }
+        sets: { orderBy: { date: "asc" }, include: { exercise: true } },
+        exercises: { orderBy: { order: "asc" }, include: { exercise: true } }
       }
     });
     return NextResponse.json({ session });
